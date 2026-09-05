@@ -45,7 +45,7 @@
             cursor: pointer; transition: transform .15s, box-shadow .15s, border-color .15s; text-align: center;
             font-weight: bold; font-size: 16px; color: #2c3e50; width: 100%; box-sizing: border-box;
         }
-        .tile:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,.08); border-color: #e0e3e8; }
+        .tile:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,.08); border-color: #e0e3e8; background-color: #fff; color: #2c3e50; }
         /* چاککردنی دیزاین: دۆخی کرتەکردن (:active) — کاتێک بەکارهێنەر ڕاستەوخۆ کرتە
            لەسەر کاشییەک دەکات (نەک تەنها راده‌ست دەکات)، کاشییەکە کەمێک دەچڕێتەوە
            (scale) بۆ فیدباکی وردی "زیندوو" پێش ئەوەی شاشەکە بگۆڕدرێت. */
@@ -529,7 +529,11 @@
 
         /* ===== زیادکراو: شاشەی ئەدمین ===== */
         .admin-tabs { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
-        .admin-tab-btn { padding: 9px 16px; border: 1px solid #dde3ea; background: #f7f9fb; border-radius: 8px; cursor: pointer; font-size: 14px; }
+        .admin-tab-btn { padding: 9px 16px; border: 1px solid #dde3ea; background: #f7f9fb; color: #2c3e50; border-radius: 8px; cursor: pointer; font-size: 14px; }
+        /* چاککردنی هەمان کێشەی کۆنتراست: بەبێ ئەم ڕیزە، ڕەنگی گشتیی button:hover
+           (سەوزی تاریک) دەکەوتە سەر ئەم دوگمانەش کاتی hover، لەگەڵ دەقی تاریکی
+           سەرەوە = دووبارە ناڕوونی. لێرەدا لای خۆی ڕووناک دەهێڵینەوە. */
+        .admin-tab-btn:hover { background: #eef1f5; color: #2c3e50; }
         .admin-tab-btn.active { background: #2c3e50; color: #fff; border-color: #2c3e50; }
         .admin-tab-pane { display: none; }
         .admin-tab-pane.active { display: block; }
