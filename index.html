@@ -4987,7 +4987,12 @@ var qrcode = function() {
         let nameToId = {};
         let migrated = customCategories.map(c => {
             if(typeof c === 'string') {
-                let id = genCategoryId();
+                // تێبینی: genCategoryId() ئێستا async‌ە (بۆ چاککردنی ململانێی ID لای
+                // چەند بەکارهێنەر)، بەڵام ئەم کۆچکردنە تەنها یەک جار بۆ داتای زۆر کۆنی
+                // شێوازی لیستی-ناوی-سادە ڕوودەدات (نەک کرداری هاوکاتی چەند بەکارهێنەر)،
+                // بۆیە بە سادەیی ژمارەی خۆی-لای-کلاینت بەکاردێت وەک پێشتر.
+                let id = 'cat_' + nextCategoryId;
+                nextCategoryId++;
                 nameToId[c] = id;
                 return { id: id, name: c, parentId: null };
             }
@@ -5029,7 +5034,25 @@ var qrcode = function() {
         if(changed) syncInventoryToSupabase();
     }
 
-    function genCategoryId() {
+    // چاککردنی هەڵە (ڕیسکی هاوکاتی دوو بەکارهێنەر): پێشتر ئەم فەنکشنە تەنها لەسەر
+    // ژمارەی خۆی-لای-کلاینت (nextCategoryId، کە لەوانەیە هەندێک خولەک کۆن بێت) ID‌ی
+    // نوێی گروپی دروست دەکرد. ئەگەر دوو بەکارهێنەر هاوکات گروپی نوێ زیاد بکەن،
+    // دەکرا هەردووکیان هەمان ID (بۆ نموونە cat_348) وەربگرن و یەکێکیان لەناو بچێت.
+    // ئێستا پێش دروستکردنی ID، دوایین داتای گروپەکان لای سه‌رڤه‌ری Supabase‌ش
+    // ڕاستەوخۆ دەخوێنرێتەوە (نەک تەنها داتای کۆنی کلایەنت)، بۆ کەمکردنەوەی ئەم
+    // ڕیسکە بۆ کەمترین ڕادە — هەمان شێوازی چاککردنی nextItemSeqForCategory().
+    async function genCategoryId() {
+        let serverMaxId = 0;
+        try {
+            const { data: catRow } = await sb.from('custom_categories').select('data').eq('id', 1).maybeSingle();
+            if(catRow && Array.isArray(catRow.data)) {
+                catRow.data.forEach(c => {
+                    let n = parseInt(String(c.id).replace('cat_', ''), 10);
+                    if(!isNaN(n) && n > serverMaxId) serverMaxId = n;
+                });
+            }
+        } catch(e) { console.warn('پشکنینی دوایین ID‌ی گروپ لای سه‌رڤه‌ر سەرکەوتوو نەبوو', e); }
+        nextCategoryId = Math.max(nextCategoryId, serverMaxId + 1);
         let id = 'cat_' + nextCategoryId;
         nextCategoryId++;
         syncCounter('nextCategoryId', nextCategoryId);
@@ -5581,6 +5604,8 @@ var qrcode = function() {
             : `ئایا دڵنیایت لە سڕینەوەی شوێنی [${val}]؟`;
         if(confirm(msg)) {
             projectLocations = projectLocations.filter(l => l !== val);
+            // چاککردن: سڕینەوەی ڕاستەوخۆ و تایبەت (بڕوانە تێبینی syncSimpleList()).
+            sb.from('project_locations').delete().eq('name', val).then(({error}) => { if(error) console.error('delete location failed', error); });
             syncProjectLocationsToSupabase();
             populateProjectLocationDropdowns();
             alert('شوێنەکە بە سەرکەوتوویی سڕایەوە.');
@@ -5661,6 +5686,10 @@ var qrcode = function() {
         }
         if(!confirm(`ئایا دڵنیایت لە سڕینەوەی دابینکەری [${name}]؟`)) return;
         suppliers = suppliers.filter(s => s !== name);
+        // چاککردن: سڕینەوەی ڕاستەوخۆ و تایبەت بۆ ئەم ناوە لای Supabase (نەک بە
+        // بەراوردی لیستی تەواو)، بۆ نەبوونی ڕیسکی سڕینەوەی هەڵەی داتای بەکارهێنەرێکی
+        // تر — بڕوانە تێبینی syncSimpleList().
+        sb.from('suppliers').delete().eq('name', name).then(({error}) => { if(error) console.error('delete supplier failed', error); });
         syncSuppliersToSupabase();
         populateSupplierDatalist();
         renderSuppliersListTable();
@@ -5910,12 +5939,12 @@ var qrcode = function() {
     // زیادکردنی گروپێکی سەرەکی (ڕەگ، parentId = null). هەردوو دوگمەی "زیادکردنی گروپ" (لە
     // شاشەی پێناسی کاڵا و شاشەی ڕێکخستنەکان) ئەم یەک فەنکشنە بەکاردەهێنن تاکو هەردووکیان
     // هەمیشە هەمان ڕەفتار و هەمان پشکنینیان هەبێت.
-    function addRootCategory(inputEl) {
+    async function addRootCategory(inputEl) {
         if(!inputEl) return;
         let name = inputEl.value.trim();
         if(!name) return;
         if(categoryNameExistsUnderParent(name, null, null)) { alert('ئەم گروپە پێشتر بوونی هەیە.'); return; }
-        customCategories.push({ id: genCategoryId(), name: name, parentId: null, seq: nextSeqForParent(null) });
+        customCategories.push({ id: await genCategoryId(), name: name, parentId: null, seq: nextSeqForParent(null) });
         syncCustomCategoriesToSupabase();
         inputEl.value = "";
         renderCategoriesTree();
@@ -5925,7 +5954,7 @@ var qrcode = function() {
 
     // نوێ: زیادکردنی ژێر-گروپ لەناو هەر گروپ یان ژێر-گروپێکدا — دەتوانرێت بێ سنووری قوڵی
     // دووبارە بکرێتەوە (ژێر-گروپی ژێر-گروپ، هتد).
-    function promptAddSubCategory(parentId) {
+    async function promptAddSubCategory(parentId) {
         let parent = getCategoryById(parentId);
         if(!parent) return;
         let parentPath = getCategoryFullPath(parentId);
@@ -5934,7 +5963,7 @@ var qrcode = function() {
         name = name.trim();
         if(!name) return;
         if(categoryNameExistsUnderParent(name, parentId, null)) { alert('ئەم ناوە پێشتر لەژێر ئەم گروپەدا بوونی هەیە.'); return; }
-        customCategories.push({ id: genCategoryId(), name: name, parentId: parentId, seq: nextSeqForParent(parentId) });
+        customCategories.push({ id: await genCategoryId(), name: name, parentId: parentId, seq: nextSeqForParent(parentId) });
         syncCustomCategoriesToSupabase();
         renderCategoriesTree();
         populateCategoryDropdowns();
@@ -6184,7 +6213,10 @@ var qrcode = function() {
 
     function deletePersonByIndex(idx) {
         if(!confirm('ئایا دڵنیایت لە سڕینەوەی ' + (persons[idx] ? persons[idx].name : '') + '؟')) return;
+        let removedName = persons[idx] ? persons[idx].name : null;
         persons.splice(idx, 1);
+        // چاککردن: سڕینەوەی ڕاستەوخۆ و تایبەت (بڕوانە تێبینی syncPersonsToSupabase()).
+        if(removedName) sb.from('persons').delete().eq('name', removedName).then(({error}) => { if(error) console.error('delete person failed', error); });
         syncPersonsToSupabase();
         renderPersonsListTable();
         populatePersonDatalist();
@@ -6403,7 +6435,14 @@ var qrcode = function() {
                 // چاککردن: کاڵای بێ-گروپ (orphaned، بۆ نموونە دوای سڕینەوەی گروپەکەی) ئێستا
                 // دەتوانرێت ڕاستەوخۆ لێرەوە گروپی نوێی بۆ دیاری بکرێت — کۆدی کاڵا بەخۆکار
                 // بەپێی گروپی نوێ دروست دەکرێت و لە هەموو مێژووی وەسڵدا نوێ دەکرێتەوە.
-                let newSeq = nextItemSeqForCategory(category);
+                // چاککردنی هەڵە (ڕیسکی هاوکاتی دوو بەکارهێنەر): هەمان چاککردنی
+                // سەرەوە بۆ کاڵای بێ-گروپ کە گروپی نوێی بۆ دیاری دەکرێت.
+                let serverMaxSeqOrphan = 0;
+                try {
+                    const { data: seqRowsOrphan } = await sb.from('inventory').select('item_seq').eq('category', category).order('item_seq', { ascending: false }).limit(1);
+                    if(seqRowsOrphan && seqRowsOrphan.length) serverMaxSeqOrphan = seqRowsOrphan[0].item_seq || 0;
+                } catch(eOrphan) { console.warn('پشکنینی دوایین کۆدی کاڵا لای سه‌رڤه‌ر سەرکەوتوو نەبوو', eOrphan); }
+                let newSeq = Math.max(serverMaxSeqOrphan, nextItemSeqForCategory(category) - 1) + 1;
                 let newCode = getCategoryCode(category) + '.' + newSeq;
                 renameItemCode(existing.code, newCode);
                 existing.itemSeq = newSeq;
@@ -10927,10 +10966,13 @@ var qrcode = function() {
             if(changedData.pr && changedData.pr.length) syncPromises.push(syncPRToSupabase(changedData.pr));
             if(changedData.return && changedData.return.length) syncPromises.push(syncReturnToSupabase(changedData.return));
         }
+        // چاککردن (بەرهەمی مردوو سڕایەوە): nextItemCodeId هەرگیز بۆ دروستکردنی کۆدی
+        // کاڵا بەکارناهێنرێت (سیستەم بە شێوەی گروپ.ژمارە کار دەکات)، بۆیە sync‌کردنی
+        // ئەم ژمارە بۆ Supabase تەنها نووسینێکی زیادەی بێ کارلێک بوو — لابرا.
         syncPromises.push(
             syncCounter('nextVoucherNo', nextVoucherNo), syncCounter('nextOutVoucherNo', nextOutVoucherNo),
             syncCounter('nextPRVoucherNo', nextPRVoucherNo), syncCounter('nextReturnVoucherNo', nextReturnVoucherNo),
-            syncCounter('nextAdjVoucherNo', nextAdjVoucherNo), syncCounter('nextItemCodeId', nextItemCodeId)
+            syncCounter('nextAdjVoucherNo', nextAdjVoucherNo)
         );
         await Promise.all(syncPromises);
         performAdvancedStockSearch();
@@ -11515,7 +11557,16 @@ var qrcode = function() {
         if(getCategoryChildren(newCategoryId).length > 0) { alert('❌ ناتوانرێت کاڵا بخرێتە ژێر گروپێک کە خۆی ژێرگروپی هەیە. تکایە ژێرگروپێکی کۆتایی هەڵبژێرە.'); return; }
         if(item.category === newCategoryId) { closeMoveModal(); return; }
         let oldCode = item.code;
-        let newSeq = nextItemSeqForCategory(newCategoryId);
+        // چاککردنی هەڵە (ڕیسکی هاوکاتی دوو بەکارهێنەر): هەمان چاککردنی نێو
+        // saveItemMaster() — پێش دروستکردنی کۆدی نوێ، دوایین ژمارە لای سه‌رڤه‌ری
+        // ڕاستەقینەش دەپشکنرێت (نەک تەنها داتای کۆنی کلایەنت)، بۆ کەمکردنەوەی ڕیسکی
+        // دووبارەبوونی کۆد کاتێک دوو بەکارهێنەر هاوکات کاڵا بۆ هەمان گروپ دەگوازنەوە.
+        let serverMaxSeqMove = 0;
+        try {
+            const { data: seqRowsMove } = await sb.from('inventory').select('item_seq').eq('category', newCategoryId).order('item_seq', { ascending: false }).limit(1);
+            if(seqRowsMove && seqRowsMove.length) serverMaxSeqMove = seqRowsMove[0].item_seq || 0;
+        } catch(eMove) { console.warn('پشکنینی دوایین کۆدی کاڵا لای سه‌رڤه‌ر سەرکەوتوو نەبوو', eMove); }
+        let newSeq = Math.max(serverMaxSeqMove, nextItemSeqForCategory(newCategoryId) - 1) + 1;
         let newCode = getCategoryCode(newCategoryId) + '.' + newSeq;
         item.category = newCategoryId;
         item.itemSeq = newSeq;
@@ -13405,17 +13456,19 @@ async function deleteCustodyRecordFromSupabase(id) {
 // سڕینەوەیەکی ڕاستەقینەیە کە کارمەند خۆی کردوویەتی)، و باقی لیستەکە بە upsert (لەسەر بنەمای
 // "name" کە دەبێت UNIQUE بێت لە Supabase) نوێ دەکرێتەوە/زیاد دەکرێت — بەبێ دەستکاری/سڕینەوەی
 // هیچ ناوێکی تر کە لەلایەن بەکارهێنەرێکی هاوکاتی تری زیادکرابێت.
+// چاککردنی هەڵەیەکی زۆر گرنگی دواکەوتوو (Race Condition / Data-Loss): پێشتر ئەم
+// فەنکشنە پێش نووسین، ناوە ماوەکانی Supabase دەخوێندەوە و بەراوردی دەکرد لەگەڵ
+// لیستی خۆی-لای-کلاینت (currentNames) بۆ دیاریکردنی "کێ دەبێت بسڕدرێتەوە". ئەگەر
+// لەنێوان ئەو خوێندنەوەیە و نووسینەکەدا، بەکارهێنەرێکی تر ناوێکی نوێی زیاد
+// کردبایە، ئەو ناوە بە هەڵە وەک "سڕاوە" دادەنرا و دەسڕدرایەوە. ئێستا ئەم فەنکشنە
+// **تەنها upsert دەکات، هەرگیز خۆی هیچ ناوێک ناسڕێتەوە** — سڕینەوە ئێستا تەنها لە
+// ڕێگەی کرداری ڕاستەوخۆی بەکارهێنەر (دوگمەی سڕینەوە) بە delete‌ی تایبەت بۆ هەمان
+// ناو ئەنجام دەدرێت (بڕوانە deleteSupplierPrompt/deleteSelectedProjectLocation)،
+// نەک بە بەراوردی لیستی تەواو. ئەمە ڕیسکی سڕینەوەی هەڵەی ناوی کەسێکی تر بە تەواوی
+// لادەبات.
 async function syncSimpleList(table, arr) {
     try {
-        const { data: existingRows, error: fetchErr } = await sb.from(table).select('name');
-        if(fetchErr) throw fetchErr;
-        const existingNames = (existingRows || []).map(r => r.name);
         const currentNames = arr || [];
-        const namesToDelete = existingNames.filter(n => !currentNames.includes(n));
-        if(namesToDelete.length) {
-            const { error: delErr } = await sb.from(table).delete().in('name', namesToDelete);
-            if(delErr) throw delErr;
-        }
         if(currentNames.length) {
             const { error } = await sb.from(table).upsert(currentNames.map(name => ({ name })), { onConflict: 'name' });
             if(error) throw error;
@@ -13431,17 +13484,12 @@ async function syncProjectLocationsToSupabase() { await syncSimpleList('project_
 // لەناو syncSimpleList() سەرەوە — ئێستا تەنها ئەو کەسانەی لای Supabase هەن بەڵام لە لیستی
 // ئێستادا نەماون دەسڕدرێنەوە، و باقی بە upsert (لەسەر "name") نوێ دەکرێنەوە/زیاد دەکرێن،
 // بەبێ سڕینەوەی کەسانی زیادکراو لەلایەن بەکارهێنەرێکی هاوکاتی تری.
+// چاککردنی هەڵەیەکی زۆر گرنگی دواکەوتوو (Race Condition / Data-Loss): هەمان چاککردنی
+// syncSimpleList() سەرەوە — ئێستا تەنها upsert دەکات، هیچ کەسێک بە بەراوردی لیستی
+// تەواو ناسڕدرێتەوە. سڕینەوە تەنها لە deletePersonByIndex‌ەوە بە شێوەی ڕاستەوخۆ
+// ئەنجام دەدرێت.
 async function syncPersonsToSupabase() {
     try {
-        const { data: existingRows, error: fetchErr } = await sb.from('persons').select('name');
-        if(fetchErr) throw fetchErr;
-        const existingNames = (existingRows || []).map(r => r.name);
-        const currentNames = (persons || []).map(p => p.name);
-        const namesToDelete = existingNames.filter(n => !currentNames.includes(n));
-        if(namesToDelete.length) {
-            const { error: delErr } = await sb.from('persons').delete().in('name', namesToDelete);
-            if(delErr) throw delErr;
-        }
         if(persons.length) {
             const rows = persons.map(p => ({ name: p.name, grade: p.grade || null, department: p.department || null }));
             const { error } = await sb.from('persons').upsert(rows, { onConflict: 'name' });
@@ -13565,7 +13613,7 @@ async function syncAllCoreDataToSupabase() {
     await Promise.all([
         syncCounter('nextVoucherNo', nextVoucherNo), syncCounter('nextOutVoucherNo', nextOutVoucherNo),
         syncCounter('nextPRVoucherNo', nextPRVoucherNo), syncCounter('nextReturnVoucherNo', nextReturnVoucherNo),
-        syncCounter('nextAdjVoucherNo', nextAdjVoucherNo), syncCounter('nextItemCodeId', nextItemCodeId),
+        syncCounter('nextAdjVoucherNo', nextAdjVoucherNo),
         syncCounter('nextCategoryId', nextCategoryId)
     ]);
 }
