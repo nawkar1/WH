@@ -155,6 +155,12 @@
         .sidebar-brand { text-align: center; font-weight: bold; font-size: 20px; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid #34495e; color: #1abc9c; }
         .sidebar-menu { list-style: none; padding: 0; margin: 0; }
         .sidebar-item { padding: 12px 15px; border-radius: 6px; margin-bottom: 8px; cursor: pointer; font-weight: bold; transition: background 0.2s; display: flex; align-items: center; gap: 10px; }
+        /* چاککردنی دیزاین: هەمان ئایکۆنی هێڵی (line-icon) کە لە کاشییەکانی داشبۆرد
+           بەکارهاتوون، ئێستا لە مینیوی لاتەنیشتیشدا (سایدبار) بەکاردێن — بۆ یەکگرتوویی
+           دیمەن لە هەموو بەرنامەکەدا. ڕەنگی SVGـەکە بە currentColor‌ە، بۆیە خۆکار
+           لەگەڵ ڕەنگی دەقی مینیوی بەکارهێنراو (ئاسایی/hover/active) دەگۆڕدرێت. */
+        .sidebar-icon { width: 19px; height: 19px; flex-shrink: 0; }
+        .sidebar-icon svg { width: 100%; height: 100%; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
         .sidebar-item:hover, .sidebar-item.active { background-color: #34495e; color: #1abc9c; }
         .btn-home-back { width: 100%; padding: 10px; background-color: #e74c3c; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-bottom: 20px; }
         .btn-home-back:hover { background-color: #c0392b; }
@@ -757,19 +763,19 @@
         <div class="sidebar-brand" id="sidebarBrandText">SRWAY BAHAR</div>
         <button class="btn-home-back" onclick="backToDashboard()">🏠 گەڕانەوە بۆ سەرەکی</button>
         <ul class="sidebar-menu">
-            <li class="sidebar-item nav-accent-master" id="menu_screenMaster" onclick="openScreen('screenMaster')">📦 پێناسی کاڵا</li>
-            <li class="sidebar-item nav-accent-in" id="menu_screenInward" onclick="openScreen('screenInward')">📥 وەسڵی هاتوو</li>
-            <li class="sidebar-item nav-accent-out" id="menu_screenOutward" onclick="openScreen('screenOutward')">📤 وەسڵی ڕۆشتوو</li>
-            <li class="sidebar-item nav-accent-ret" id="menu_screenReturn" onclick="openScreen('screenReturn')">🔄 گەڕانەوەکان</li>
-            <li class="sidebar-item nav-accent-stock" id="menu_screenStock" onclick="openScreen('screenStock')">📊 باڵانسی ئێستا</li>
-            <li class="sidebar-item nav-accent-custody" id="menu_screenCustody" onclick="openScreen('screenCustody')">🧰 ئامێرەکانی لای کەسەکان</li>
-            <li class="sidebar-item nav-accent-pr" id="menu_screenPR" onclick="openScreen('screenPR')">📝 داواکاری کڕین</li>
-            <li class="sidebar-item nav-accent-reconcile" id="menu_screenReconcile" onclick="openScreen('screenReconcile')">📋 جەردی دەوری</li>
-            <li class="sidebar-item nav-accent-project" id="menu_screenProject" onclick="openScreen('screenProject')">🏢 تێچووی پڕۆژەکان</li>
-            <li class="sidebar-item nav-accent-history" id="menu_screenHistory" onclick="openScreen('screenHistory')">📜 مێژووی وەسڵەکان</li>
-            <li class="sidebar-item nav-accent-settings" id="menu_screenSettings" onclick="openScreen('screenSettings')">⚙️ ڕێکخستنەکان</li>
-            <li class="sidebar-item" id="menu_screenAbout" onclick="openScreen('screenAbout')">ℹ️ دەربارە</li>
-            <li class="sidebar-item" id="menu_screenAdmin" onclick="openScreen('screenAdmin')" style="display:none; background:#2c3e50; color:#fff;">🛡️ بەڕێوەبردنی سیستەم (ئەدمین) <span id="adminPendingBadge" style="display:none; background:#e74c3c; color:#fff; border-radius:10px; padding:1px 7px; font-size:11px; margin-right:6px;"></span></li>
+            <li class="sidebar-item nav-accent-master" id="menu_screenMaster" onclick="openScreen('screenMaster')"><span class="sidebar-icon"><svg viewBox="0 0 24 24"><path d="M21 8 12 3 3 8l9 5 9-5Z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg></span>پێناسی کاڵا</li>
+            <li class="sidebar-item nav-accent-in" id="menu_screenInward" onclick="openScreen('screenInward')"><span class="sidebar-icon"><svg viewBox="0 0 24 24"><path d="M12 5v9"/><path d="M8.5 10.5 12 14l3.5-3.5"/><path d="M5 15v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3"/></svg></span>وەسڵی هاتوو</li>
+            <li class="sidebar-item nav-accent-out" id="menu_screenOutward" onclick="openScreen('screenOutward')"><span class="sidebar-icon"><svg viewBox="0 0 24 24"><path d="M12 14V5"/><path d="M8.5 8.5 12 5l3.5 3.5"/><path d="M5 15v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3"/></svg></span>وەسڵی ڕۆشتوو</li>
+            <li class="sidebar-item nav-accent-ret" id="menu_screenReturn" onclick="openScreen('screenReturn')"><span class="sidebar-icon"><svg viewBox="0 0 24 24"><path d="M3 11a9 9 0 0 1 15.5-6.2L21 7"/><path d="M21 3v4.5h-4.5"/><path d="M21 13a9 9 0 0 1-15.5 6.2L3 17"/><path d="M3 21v-4.5h4.5"/></svg></span>گەڕانەوەکان</li>
+            <li class="sidebar-item nav-accent-stock" id="menu_screenStock" onclick="openScreen('screenStock')"><span class="sidebar-icon"><svg viewBox="0 0 24 24"><path d="M4 21V11"/><path d="M12 21V4"/><path d="M20 21v-7"/></svg></span>باڵانسی ئێستا</li>
+            <li class="sidebar-item nav-accent-custody" id="menu_screenCustody" onclick="openScreen('screenCustody')"><span class="sidebar-icon"><svg viewBox="0 0 24 24"><rect x="3" y="9" width="18" height="11" rx="2"/><path d="M8 9V6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v3"/><path d="M3 13h18"/></svg></span>ئامێرەکانی لای کەسەکان</li>
+            <li class="sidebar-item nav-accent-pr" id="menu_screenPR" onclick="openScreen('screenPR')"><span class="sidebar-icon"><svg viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1"/><path d="M8 11h8M8 15h8M8 8h4"/></svg></span>داواکاری کڕین</li>
+            <li class="sidebar-item nav-accent-reconcile" id="menu_screenReconcile" onclick="openScreen('screenReconcile')"><span class="sidebar-icon"><svg viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1"/><path d="M9 13.5l2 2 4-4.5"/></svg></span>جەردی دەوری</li>
+            <li class="sidebar-item nav-accent-project" id="menu_screenProject" onclick="openScreen('screenProject')"><span class="sidebar-icon"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="1"/><path d="M9 7h1M14 7h1M9 11h1M14 11h1M9 15h1M14 15h1"/></svg></span>تێچووی پڕۆژەکان</li>
+            <li class="sidebar-item nav-accent-history" id="menu_screenHistory" onclick="openScreen('screenHistory')"><span class="sidebar-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2"/><path d="M9 2h6"/></svg></span>مێژووی وەسڵەکان</li>
+            <li class="sidebar-item nav-accent-settings" id="menu_screenSettings" onclick="openScreen('screenSettings')"><span class="sidebar-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><circle cx="12" cy="12" r="7.6" stroke-dasharray="1.6 3"/></svg></span>ڕێکخستنەکان</li>
+            <li class="sidebar-item" id="menu_screenAbout" onclick="openScreen('screenAbout')"><span class="sidebar-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><path d="M12 7.5v.01"/></svg></span>دەربارە</li>
+            <li class="sidebar-item" id="menu_screenAdmin" onclick="openScreen('screenAdmin')" style="display:none; background:#2c3e50; color:#fff;"><span class="sidebar-icon"><svg viewBox="0 0 24 24"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3Z"/></svg></span>بەڕێوەبردنی سیستەم (ئەدمین) <span id="adminPendingBadge" style="display:none; background:#e74c3c; color:#fff; border-radius:10px; padding:1px 7px; font-size:11px; margin-right:6px;"></span></li>
         </ul>
     </div>
 
