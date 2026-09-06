@@ -26,13 +26,17 @@
         h1, h2, h3, h4 { text-align: center; color: #2c3e50; }
         
         /* شاشەی سەرەکی کاشییەکان */
-        .dashboard-container { max-width: 1200px; margin: 60px auto; padding: 20px; text-align: center; }
+        /* چاککردنی دیزاین (خاڵی ٦ی داواکراو): باکگراوندی سووکی گرادیانت بۆ خودی داشبۆردی
+           سەرەکی (هەمان هەستی ئارامی iCloud-ی شاشەی login)، لەجیاتی ڕەنگی تەخت — بۆ
+           یەکگرتوویی زیاتری برانددارکردن لە نێوان یەکەم شاشە (login) و شاشەی ماڵەوە. */
+        #dashboardScreen { background: radial-gradient(circle at 50% 0%, #eef3fb 0%, #f4f6f9 55%); min-height: 100vh; margin-top: -20px; padding-top: 20px; }
+        .dashboard-container { max-width: 1200px; margin: 64px auto; padding: 24px; text-align: center; }
         @media (max-width: 600px) {
             /* چاککردنی دیزاین: بۆشایی ٦٠px لەسەرەوە لە مۆبایلدا زۆر گەورەیە و شوێنی
                بەسوود لە شاشەی بچووکدا بەفیڕۆدەدات. */
-            .dashboard-container { margin: 20px auto; padding: 10px; }
+            .dashboard-container { margin: 16px auto; padding: 8px; }
         }
-        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 25px; margin-top: 40px; }
+        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 24px; margin-top: 40px; }
         /* چاککردنی دیزاین: پێشتر هەر کاشییەک پاسوونێدی تەواو ڕەنگاوڕەنگی خۆی هەبوو، کە
            لەگەڵ کارتەکانی KPI (سپی + هێڵی وردی ڕەنگاوڕەنگ) دوو زمانی دیزاینی جیاوازیان
            لەسەر یەک شاشە دروست دەکرد. ئێستا هەردووکیان هەمان زمانی دیزاین بەکاردێنن:
@@ -40,7 +44,7 @@
            سووکی هەمان ڕەنگدا — نزیکتر لە ستانداردی مۆدێرنی ئێستا (٢٠٢٦). هیچ گۆڕانکارییەک
            لە HTML یان لۆژیکی کرتەکردن نەکراوە، تەنها ڕەنگی CSS. */
         .tile {
-            background: #fff; padding: 28px 18px; border-radius: 12px;
+            background: #fff; padding: 24px 16px; border-radius: 12px;
             box-shadow: 0 1px 3px rgba(0,0,0,.04); border: 1px solid #eceef1; border-bottom: 1px solid #eceef1;
             cursor: pointer; transition: transform .15s, box-shadow .15s, border-color .15s; text-align: center;
             font-weight: bold; font-size: 16px; color: #2c3e50; width: 100%; box-sizing: border-box;
@@ -83,7 +87,7 @@
 
         .tile-icon {
             font-size: 30px; display: flex; align-items: center; justify-content: center;
-            width: 58px; height: 58px; border-radius: 50%; margin: 0 auto 12px;
+            width: 56px; height: 56px; border-radius: 50%; margin: 0 auto 16px;
             background: #f0f2f5; /* بنەڕەت، ئەگەر هیچ ڕەنگی تایبەت نەبێت */
         }
         /* چاککردنی دیزاین: ئایکۆنە ئیمۆجییەکان (📥📤📊...) لەسەر سیستەمی جیاواز
@@ -94,8 +98,8 @@
         .tile-icon svg { width: 28px; height: 28px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 
         /* پێشنیاری دیزاین: کارتی زانیاری خێرا (KPI) بۆ داشبۆرد */
-        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 18px; margin: 30px 0; }
-        .kpi-card { background: white; border-radius: 10px; padding: 18px 10px; box-shadow: 0 1px 3px rgba(0,0,0,.04); border: 1px solid #eceef1; border-bottom: 3px solid #bdc3c7; display: flex; flex-direction: column; transition: transform .15s, box-shadow .15s, border-color .15s; }
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin: 32px 0; }
+        .kpi-card { background: white; border-radius: 10px; padding: 16px 8px; box-shadow: 0 1px 3px rgba(0,0,0,.04); border: 1px solid #eceef1; border-bottom: 3px solid #bdc3c7; display: flex; flex-direction: column; transition: transform .15s, box-shadow .15s, border-color .15s; }
         /* نوێ: کارتی KPI ئێستا کرتەکراوە (خاڵی ١ی داواکراو) — دەبڕژێتەوە بۆ شاشەی پەیوەندیدار.
            هەمان هەستی hover‌ی کاشییەکان بەکاردێت، بۆ یەکگرتوویی دیمەن. */
         .kpi-card.kpi-clickable { cursor: pointer; }
@@ -314,7 +318,7 @@
         #appLoadingOverlay {
             position: fixed; inset: 0; z-index: 99998;
             background: #f5f6f8;
-            display: none; align-items: center; justify-content: center;
+            display: none; align-items: flex-start; justify-content: center;
             color: #2c3e50; font-size: 18px; flex-direction: column; gap: 14px;
         }
         #appLoadingOverlay .spinner {
@@ -323,6 +327,25 @@
             animation: appLoadingSpin 0.9s linear infinite;
         }
         @keyframes appLoadingSpin { to { transform: rotate(360deg); } }
+        /* چاککردنی دیزاین (خاڵی ٧ی داواکراو): لەجیاتی تەنها خولانەوەیەکی سادە لەناوەڕاستی
+           شاشەیەکی بەتاڵ، ئێستا شێوازی "سکێلیتۆن" (Skeleton) بەکاردێت کە شێوەی داشبۆردی
+           ڕاستەقینە (سەرنووسی، KPI‌کان، کاشییەکان) بە خشتەی خاکەستەیی تروسکاو پیشان دەدات
+           — هەستی خێراتری بارکردن دەدات، تەنانەت ئەگەر هەمان کاتی ڕاستەقینە بخایەنێت،
+           چونکە بەکارهێنەر پێشبینی شێوەی ئەنجامی کۆتایی دەکات پێش ئەوەی بگاتێ.
+        */
+        #appLoadingOverlay .skeleton-wrap { width: 100%; max-width: 900px; margin: 60px auto 0; padding: 0 24px; box-sizing: border-box; }
+        .skeleton-box {
+            background: linear-gradient(90deg, #e9ecef 25%, #f4f5f7 37%, #e9ecef 63%);
+            background-size: 400% 100%;
+            animation: skeletonShimmer 1.4s ease-in-out infinite;
+            border-radius: 10px;
+        }
+        @keyframes skeletonShimmer { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
+        .skeleton-title { width: 220px; height: 28px; margin-bottom: 24px; }
+        .skeleton-kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .skeleton-kpi { height: 64px; }
+        .skeleton-tile-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; }
+        .skeleton-tile { height: 110px; }
         #loginOverlay .login-box {
             background: #fff; border-radius: 18px; padding: 46px 38px; width: 100%; max-width: 380px;
             /* چاککردنی دیزاین: لەبەر ئەوەی پاسوونێد ئێستا ڕووناکە (نەک تیرە)، سێبرێکی زۆر
@@ -686,12 +709,34 @@
 
 <!-- نوێ: شاشەی چاوەڕوانی بارکردنی داتا (بڕوانە تێبینی سەرەکی لەناو CSS-ی #appLoadingOverlay) -->
 <div id="appLoadingOverlay">
-    <div class="spinner"></div>
-    <div>⏳ چاوەڕوانبە، داتاکان باردەکرێن...</div>
+    <div class="skeleton-wrap">
+        <div class="skeleton-box skeleton-title"></div>
+        <div class="skeleton-kpi-row">
+            <div class="skeleton-box skeleton-kpi"></div>
+            <div class="skeleton-box skeleton-kpi"></div>
+            <div class="skeleton-box skeleton-kpi"></div>
+            <div class="skeleton-box skeleton-kpi"></div>
+            <div class="skeleton-box skeleton-kpi"></div>
+        </div>
+        <div class="skeleton-tile-row">
+            <div class="skeleton-box skeleton-tile"></div>
+            <div class="skeleton-box skeleton-tile"></div>
+            <div class="skeleton-box skeleton-tile"></div>
+            <div class="skeleton-box skeleton-tile"></div>
+            <div class="skeleton-box skeleton-tile"></div>
+            <div class="skeleton-box skeleton-tile"></div>
+        </div>
+    </div>
 </div>
 
 <!-- ===== زیادکراو: تاکبار بەکارهێنەر ===== -->
 <div id="userBar" style="display:none;">
+    <!-- نوێ (خاڵی ٥ی داواکراو): زەنگی ئاگاداری — کۆی گشتی داواکاری کڕینی چاوەڕوان
+         پیشان دەدات، تاکو بەکارهێنەر پێویست نەکات خۆی بگەڕێت بۆ دۆزینەوەیان. -->
+    <span id="notifBell" onclick="openScreen('screenPR')" title="داواکاری چاوەڕوان" style="position:relative; cursor:pointer; font-size:16px; display:flex; align-items:center;">
+        <svg viewBox="0 0 24 24" width="18" height="18" stroke="#5d6b7a" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span id="notifBellBadge" style="display:none; position:absolute; top:-6px; left:-8px; background:#e74c3c; color:#fff; border-radius:10px; padding:1px 5px; font-size:10px; line-height:1.3;"></span>
+    </span>
     <span id="userBarEmail"></span>
     <span onclick="editMyDisplayName()" title="گۆڕینی ناوی پیشاندان" style="cursor:pointer; font-size:12px; margin-right:4px; opacity:.75;">✏️</span>
     <span class="role-badge" id="userBarRole"></span>
@@ -714,6 +759,19 @@
          ئەمڕۆ" دەبەستێت، بۆیە بەکارهێنەر پێویستی بەوەیە بەئاسانی و بەبێ کرتەکردن
          بزانێت ئەمڕۆ چ ڕۆژ و کاتێکە. کاتەکە هەموو چرکەیەک نوێ دەبێتەوە (updateDashboardClock). -->
     <p id="dashboardLiveDateTime" style="color:#adb5bd; font-size:13px; margin-top:-14px; margin-bottom:22px; letter-spacing:.3px;"></p>
+    <!-- نوێ (خاڵی ١ی داواکراو): سڵاوی کەسیکراو بەپێی کاتژمێری ڕۆژ + ناوی بەکارهێنەری
+         چوونەژوورەوەکراو، بۆ هەستێکی گەرمتر و کەسیتر لە داشبۆرد. updateDashboardGreeting()
+         ئەمە پڕدەکاتەوە دوای چوونەژوورەوەی سەرکەوتوو. -->
+    <p id="dashboardGreeting" style="color:#5d6b7a; font-size:15px; font-weight:600; margin:-8px 0 18px;"></p>
+
+    <!-- نوێ (خاڵی ٤ی داواکراو): شریتی گەڕانی خێرا — ڕاستەوخۆ بەناو/کۆدی کاڵا دەگەڕێت
+         و دەبات بۆ شاشەی باڵانسی ئێستا، بەبێ پێویستی بە گەڕان بەناو مینیوکاندا. -->
+    <div style="max-width:480px; margin:0 auto 26px;">
+        <form onsubmit="dashboardQuickSearch(event)" style="display:flex; gap:8px;">
+            <input type="text" id="dashboardSearchInput" placeholder="🔍 گەڕان بەناو/کۆدی کاڵا..." style="flex-grow:1; margin-bottom:0; border-radius:10px;">
+            <button type="submit" style="background:#0f62fe; border-radius:10px; padding:0 18px;">گەڕان</button>
+        </form>
+    </div>
 
     <!-- پێشنیاری دیزاین: کارتی زانیاری خێرا (KPI) زیادکرا سەرووی کاشییەکان، تاکو داشبۆرد
          تەنها ناڤیگەیشن نەبێت بەڵکو زانیاری خێرای سوودبەخشیش پیشان بدات. -->
@@ -721,13 +779,20 @@
         <!-- چاککردنی هەڵەی UX (خاڵی ١ی داواکراو): پێشتر ئەم کارتانە تەنها ژمارە پیشان
              دەدان بەبێ هیچ کرتەکردنێک — بەکارهێنەر دەبووایە دووبارە بەدوای کاشییەکەدا
              بگەڕێت لە خوارەوە. ئێستا کرتەکردن ڕاستەوخۆ دەبات بۆ شاشەی پەیوەندیدار. -->
-        <div class="kpi-card kpi-value kpi-clickable" onclick="openScreen('screenStock')" title="کرتە بکە بۆ چوونە شاشەی باڵانسی ئێستا"><span class="kpi-number" id="kpiTotalValue">-</span><span class="kpi-label">کۆی گشتی بەهای کۆگا</span></div>
+        <div class="kpi-card kpi-value kpi-clickable" onclick="openScreen('screenStock')" title="کرتە بکە بۆ چوونە شاشەی باڵانسی ئێستا"><span class="kpi-number" id="kpiTotalValue">-</span><span class="kpi-label">کۆی گشتی بەهای کۆگا</span><span id="kpiTotalValueTrend" style="font-size:11px; font-weight:600; margin-top:2px;"></span></div>
         <div class="kpi-card kpi-lowstock kpi-clickable" onclick="openScreen('screenStock')" title="کرتە بکە بۆ چوونە شاشەی باڵانسی ئێستا"><span class="kpi-number" id="kpiLowStock">-</span><span class="kpi-label">کاڵای کەم لە کۆگا</span></div>
         <div class="kpi-card kpi-pr kpi-clickable" onclick="openScreen('screenPR')" title="کرتە بکە بۆ چوونە شاشەی داواکاری کڕین"><span class="kpi-number" id="kpiPendingPR">-</span><span class="kpi-label">داواکاری چاوەڕوان</span></div>
         <div class="kpi-card kpi-items kpi-clickable" onclick="openScreen('screenMaster')" title="کرتە بکە بۆ چوونە شاشەی پێناسی کاڵا"><span class="kpi-number" id="kpiItemCount">-</span><span class="kpi-label">کۆی گشتی جۆری کاڵا</span></div>
         <!-- نوێ: KPI-ی تایبەت بە تایبەتمەندی «ئامێرەکانی لای کەسەکان»، تاکو بەڕێوەبەر بەبێ
              کردنەوەی شاشەکە، ڕاستەوخۆ لە داشبۆردەوە بزانێت چەند ئامێر نەگەڕاوەتەوە. -->
         <div class="kpi-card kpi-custody kpi-clickable" onclick="openScreen('screenCustody')" title="کرتە بکە بۆ چوونە شاشەی ئامێرەکانی لای کەسەکان"><span class="kpi-number" id="kpiCustodyOut">-</span><span class="kpi-label">ئامێری لای کەسان</span></div>
+    </div>
+
+    <!-- نوێ (خاڵی ٣ی داواکراو): دواین ٥ چالاکی تۆمارکراو لە هەموو جۆرەکانی وەسڵ پێکەوە،
+         تاکو بەکارهێنەر پێویست نەکات بچێتە ناو مێژوو بۆ زانینی دواین ڕووداوەکان. -->
+    <div class="card" style="text-align:right; max-width:900px; margin:0 auto 30px; padding:16px 20px;">
+        <h3 style="margin:0 0 10px; font-size:15px; color:#5d6b7a;">🕘 دواین چالاکییەکان</h3>
+        <div id="dashboardRecentActivity" style="font-size:13px; color:#7f8c8d;">-</div>
     </div>
 
     <h3 class="dashboard-group-title group-daily">🔵 کاری ڕۆژانە</h3>
@@ -11050,6 +11115,48 @@ var qrcode = function() {
             if(pendingPR > 0) { prBadge.textContent = pendingPR > 99 ? '99+' : pendingPR; prBadge.classList.add('show'); }
             else { prBadge.classList.remove('show'); }
         }
+
+        // نوێ (خاڵی ٥ی داواکراو): هەمان ژمارە بۆ زەنگی ئاگاداری لای تاکبار.
+        let bellBadge = document.getElementById('notifBellBadge');
+        if(bellBadge) {
+            if(pendingPR > 0) { bellBadge.textContent = pendingPR > 99 ? '99+' : pendingPR; bellBadge.style.display = 'block'; }
+            else { bellBadge.style.display = 'none'; }
+        }
+
+        // نوێ (خاڵی ٢ی داواکراو): ئاڕاستەی ڕاستەقینەی بەهای کۆگا بۆ ماوەی دواین ٧ ڕۆژ
+        // — لەسەر بنەمای بەهای ڕاستەقینەی وەسڵی هاتوو/ڕۆشتووی تۆمارکراو لەم ماوەیەدا
+        // (نەک ژمارەیەکی هەڵبەستراو)، بۆیە هەمیشە ڕاستە. ئەگەر هیچ چالاکی نەبووبێت،
+        // هیچ نیشانەیەک دەرناکەوێت (لەجیاتی نیشاندانی ژمارەی هەڵە/بەتاڵ).
+        let trendEl = document.getElementById('kpiTotalValueTrend');
+        if(trendEl) {
+            let cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 7);
+            let inValue7d = 0, outValue7d = 0;
+            inwardVouchers.forEach(v => { if(new Date(v.date) >= cutoff) (v.items||[]).forEach(it => inValue7d += (it.qty||0)*(it.price||0)); });
+            outwardVouchers.forEach(v => { if(new Date(v.date) >= cutoff) (v.items||[]).forEach(it => outValue7d += (it.qty||0)*(it.price||0)); });
+            let net = inValue7d - outValue7d;
+            if(Math.abs(net) < 1) { trendEl.textContent = ''; }
+            else if(net > 0) { trendEl.textContent = '▲ +' + formatCurrency(net, CURRENCY_CODE) + ' (٧ ڕۆژی ڕابردوو)'; trendEl.style.color = '#27ae60'; }
+            else { trendEl.textContent = '▼ ' + formatCurrency(net, CURRENCY_CODE) + ' (٧ ڕۆژی ڕابردوو)'; trendEl.style.color = '#c0392b'; }
+        }
+
+        // نوێ (خاڵی ٣ی داواکراو): دواین ٥ چالاکی (وەسڵی هاتوو/ڕۆشتوو/گەڕانەوە/PR/چاکسازی)
+        // پێکەوە کۆدەکرێنەوە و بەپێی بەروار ڕیزدەکرێن.
+        let activityEl = document.getElementById('dashboardRecentActivity');
+        if(activityEl) {
+            let allActivity = [];
+            inwardVouchers.forEach(v => allActivity.push({ date: v.date, label: `📥 وەسڵی هاتوو #${v.voucherNo} — ${v.supplier || ''}` }));
+            outwardVouchers.forEach(v => allActivity.push({ date: v.date, label: `📤 وەسڵی ڕۆشتوو #${v.voucherNo} — ${v.project || ''}` }));
+            returnVouchers.forEach(v => allActivity.push({ date: v.date, label: `🔄 گەڕانەوە #${v.voucherNo}` }));
+            prVouchers.forEach(v => allActivity.push({ date: v.date, label: `📝 داواکاری کڕین #${v.voucherNo}` }));
+            adjustmentVouchers.forEach(v => allActivity.push({ date: v.date, label: `📋 چاکسازی #${v.voucherNo}` }));
+            allActivity.sort((a, b) => new Date(b.date) - new Date(a.date));
+            let top5 = allActivity.slice(0, 5);
+            if(top5.length === 0) {
+                activityEl.innerHTML = '<div style="text-align:center; padding:6px;">هیچ چالاکییەک تۆمار نەکراوە.</div>';
+            } else {
+                activityEl.innerHTML = top5.map(a => `<div style="padding:6px 0; border-bottom:1px solid #f0f2f5; display:flex; justify-content:space-between;"><span>${a.label}</span><span style="color:#adb5bd; font-size:11px;">${new Date(a.date).toLocaleDateString('en-GB')}</span></div>`).join('');
+            }
+        }
     }
 
 
@@ -12210,6 +12317,9 @@ async function onAuthSuccess(user) {
         document.getElementById('loginOverlay').style.display = 'none';
         document.getElementById('appLoadingOverlay').style.display = 'flex';
         document.getElementById('userBarEmail').textContent = profile.full_name || profile.email;
+        // نوێ (خاڵی ١ی داواکراو): سڵاوی کەسیکراوی داشبۆرد دوای هەر چوونەژوورەوەیەکی
+        // سەرکەوتوو نوێ دەکرێتەوە.
+        updateDashboardGreeting(profile);
         // چاککردنی هەڵە: پێشتر هەمیشە وشەی گشتی "بەکارهێنەر" دەردەکەوت بۆ هەموو
         // ڕۆڵێکی ئاسایی، تەنانەت ئەگەر ناونیشانی کاری (job_title) دیاریکرابێت. ئێستا
         // ئەگەر ناونیشانی کار دانرابێت (وەک "ئەندازیار")، ئەوە پیشان دەدرێت لە جیاتی.
@@ -12450,6 +12560,33 @@ function updateDashboardClock() {
 }
 updateDashboardClock();
 setInterval(updateDashboardClock, 1000);
+
+// نوێ (خاڵی ١ی داواکراو): سڵاوی کەسیکراو بەپێی کاتژمێری ڕۆژ (بەیانی/نیوەڕۆ/ئێواره‌)
+// + ناوی بەکارهێنەری چوونەژوورەوەکراو.
+function updateDashboardGreeting(profile) {
+    const el = document.getElementById('dashboardGreeting');
+    if(!el) return;
+    const hour = new Date().getHours();
+    let greetingWord;
+    if(hour < 12) greetingWord = '☀️ بەیانیت باش';
+    else if(hour < 17) greetingWord = '🌤️ نیوەڕۆت باش';
+    else greetingWord = '🌙 ئێوارەت باش';
+    let name = (profile && (profile.full_name || profile.email)) || '';
+    el.textContent = name ? `${greetingWord}، ${name}` : greetingWord;
+}
+
+// نوێ (خاڵی ٤ی داواکراو): گەڕانی خێرای داشبۆرد — بەکارهێنەر ناو/کۆدی کاڵا دەنووسێت،
+// ڕاستەوخۆ دەبات بۆ شاشەی باڵانسی ئێستا لەگەڵ ئەنجامی فلتەرکراو.
+function dashboardQuickSearch(event) {
+    event.preventDefault();
+    let query = document.getElementById('dashboardSearchInput').value.trim();
+    if(!query) return;
+    openScreen('screenStock');
+    let stockInput = document.getElementById('searchStockGlobal');
+    if(stockInput) stockInput.value = query;
+    if(typeof stockListIsOpen !== 'undefined') stockListIsOpen = true;
+    if(typeof performAdvancedStockSearch === 'function') performAdvancedStockSearch();
+}
 
 // نوێ: کردنەوەی گوێگرتنی Realtime بۆ هەموو خشتە سەرەکییەکان. کاتێک هەر گۆڕانکارییەک
 // (زیادکردن/دەستکاری/سڕینەوە) لەلایەن هەر بەکارهێنەرێکی تر (یان تەنانەت خۆتی، لە
