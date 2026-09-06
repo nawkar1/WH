@@ -8013,10 +8013,38 @@ var qrcode = function() {
             }
         }
 
+        // چاککردنی هەڵەیەکی گرنگی دواکەوتوو (Race Condition - وردەکردنەوەی کۆتایی):
+        // تەنانەت دوای پاشکەوتکردن، لەوانەیە لە کاتی ژمارتنی ئەم وەسڵەدا (لای ئەم
+        // بەکارهێنەرە) بەکارهێنەرێکی تر پێشتر گۆڕانکاری بۆ هەمان کاڵا کردبێت و
+        // sync‌ی کردبێت، بەبێ ئەوەی ئەم کلایەنتە هێشتا زانیبێت (لەبەرئەوەی داتای
+        // in-memory‌ی تازە نەکراوەتەوە). بۆ کەمکردنەوەی ئەم دۆخە بۆ کەمترین ڕادە،
+        // پێش پاشکەوتکردنی کۆتایی، باڵانسی *ڕاستەقینەی ئێستای* سه‌رڤه‌ر بۆ هەر کاڵایەکی
+        // ناو ئەم وەسڵە دووبارە دەخوێنرێتەوە؛ ئەگەر لەگەڵ ئەوەی ئەم کلایەنتە پێی
+        // دەژمارد جیاواز بوو (کەسێکی تر لەنێوان ئەمدا گۆڕانکاری کردووە)، باڵانسی
+        // نوێ لەسەر بنەمای *دوایین داتای ڕاستەقینە* (نەک داتای کۆنی ئەم کلایەنتە)
+        // دووبارە دەژمێردرێتەوە، پێش ئەوەی بنووسرێت.
+        try {
+            const affectedCodes = Object.keys(qtyByCodeInThisVoucher);
+            const { data: freshRows } = await sb.from('inventory').select('code, balance, total_in').in('code', affectedCodes);
+            (freshRows || []).forEach(fresh => {
+                let localItem = inventory.find(inv => inv.code === fresh.code);
+                if(!localItem) return;
+                let addedQty = qtyByCodeInThisVoucher[fresh.code] || 0;
+                let localBeforeBalance = (parseFloat(localItem.balance) || 0) - addedQty;
+                let serverCurrentBalance = parseFloat(fresh.balance) || 0;
+                if(Math.abs(serverCurrentBalance - localBeforeBalance) > 1e-6) {
+                    // کەسێکی تر لەم ماوەیەدا گۆڕانکاری کردووە — باڵانسی نوێ لەسەر
+                    // بنەمای داتای ڕاستەقینەی ئێستا دووبارە دەژمێردرێتەوە.
+                    localItem.balance = serverCurrentBalance + addedQty;
+                    localItem.totalIn = (parseFloat(fresh.total_in) || 0) + addedQty;
+                }
+            });
+        } catch(raceCheckErr) { console.warn('پشکنینی کۆتایی باڵانس سەرکەوتوو نەبوو', raceCheckErr); }
+
+        // چاککردنی زیاتر (Row-Level Sync): تەنها ئەو کاڵایانەی لەم وەسڵەدا هاتوون
+        // (باڵانس/لاستمووڤ/... گۆڕدراون)، ئەم وەسڵە بەخۆی، و PRـی بەستراو (ئەگەر
+        // receivedQty/status‌ی گۆڕدرابێت) دەنێردرێن — نەک هەموو کاڵا/وەسڵەکانی تر.
         await saveAndRefresh({
-            // چاککردنی زیاتر (Row-Level Sync): تەنها ئەو کاڵایانەی لەم وەسڵەدا هاتوون
-            // (باڵانس/لاستمووڤ/... گۆڕدراون)، ئەم وەسڵە بەخۆی، و PRـی بەستراو (ئەگەر
-            // receivedQty/status‌ی گۆڕدرابێت) دەنێردرێن — نەک هەموو کاڵا/وەسڵەکانی تر.
             inventory: voucherItems.map(vi => inventory.find(inv => inv.code === vi.code)).filter(Boolean),
             inward: [inwardVouchers.find(v => v.voucherNo === voucherNo)].filter(Boolean),
             pr: (poNo && poNo !== '-') ? [prVouchers.find(v => v.voucherNo === poNo)].filter(Boolean) : []
