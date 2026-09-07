@@ -120,6 +120,67 @@
         .kpi-pr { border-bottom-color: #9b59b6; }
         .kpi-items { border-bottom-color: #3498db; }
         .kpi-custody { border-bottom-color: #8d6e63; }
+        /* نوێ: ڕەنگی کارتی KPI‌ی «وەسڵی ئەمڕۆ»، هەمان زمانی دیزاینی کارتەکانی تر بەکاردێنێت. */
+        .kpi-today { border-bottom-color: #16a085; }
+
+        /* نوێ: بەشی «خێراکاری» (Quick Actions) لەسەرووی داشبۆرد — دوگمەی خێرای زۆر
+           بەکارهاتوو + خانەیەکی گەڕانی خێرای کاڵا، بۆ ئەوەی کارمەند پێویست نەکات
+           هەمیشە بۆ کاشییەکانی خوارەوە بگەڕێت بۆ کارە زۆر دووبارەبووەکان. */
+        .dashboard-quick-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px; margin: 6px 0 10px; }
+        .quick-action-btn {
+            display: inline-flex; align-items: center; gap: 8px; padding: 11px 20px; border-radius: 10px;
+            border: none; cursor: pointer; font-family: inherit; font-weight: bold; font-size: 14px;
+            color: #fff; transition: transform .15s, box-shadow .15s; box-shadow: 0 1px 3px rgba(0,0,0,.08);
+        }
+        .quick-action-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 14px rgba(0,0,0,.12); }
+        .quick-action-btn:active { transform: translateY(0) scale(.98); }
+        .quick-action-btn.qa-in { background: #27ae60; }
+        .quick-action-btn.qa-out { background: #c0392b; }
+        .quick-action-search { position: relative; flex: 1 1 260px; max-width: 340px; }
+        .quick-action-search input {
+            width: 100%; box-sizing: border-box; padding: 11px 14px; border-radius: 10px;
+            border: 1px solid #dfe3e8; font-family: inherit; font-size: 14px; background: #fff;
+        }
+        .quick-action-search input:focus { outline: 2px solid #0f62fe; outline-offset: 1px; }
+        .quick-search-results {
+            position: absolute; top: 105%; right: 0; left: 0; background: #fff; border: 1px solid #eceef1;
+            border-radius: 10px; box-shadow: 0 8px 20px rgba(0,0,0,.1); z-index: 40; max-height: 260px;
+            overflow-y: auto; text-align: right;
+        }
+        .quick-search-item { display: flex; justify-content: space-between; gap: 10px; padding: 9px 12px; cursor: pointer; font-size: 13.5px; border-bottom: 1px solid #f0f2f5; }
+        .quick-search-item:last-child { border-bottom: none; }
+        .quick-search-item:hover { background: #f4f6f9; }
+        .quick-search-empty { padding: 12px; color: #adb5bd; font-size: 13px; text-align: center; }
+
+        /* نوێ: ڕیزی خوارەوەی داشبۆرد — دوو ستوونی «دوایین چالاکی» و «چالاکی ٧ ڕۆژە»،
+           بۆ ئەوەی بەکارهێنەر بەبێ چوونە شاشەی مێژوو، ڕاستەوخۆ لە داشبۆردەوە بزانێت
+           دواین کردار چیبووە و ئاڕاستەی گشتی کۆگا چۆنە. */
+        .dashboard-bottom-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; margin: 15px 0 10px; text-align: right; }
+        .dashboard-panel { background: #fff; border-radius: 12px; border: 1px solid #eceef1; box-shadow: 0 1px 3px rgba(0,0,0,.04); padding: 16px 18px; }
+        .dashboard-panel h4 { margin: 0 0 12px; text-align: right; color: #2c3e50; font-size: 15px; }
+        .recent-activity-item { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 9px 4px; border-bottom: 1px solid #f0f2f5; cursor: pointer; font-size: 13.5px; }
+        .recent-activity-item:last-child { border-bottom: none; }
+        .recent-activity-item:hover { background: #f8f9fb; }
+        .ra-type-badge { display: inline-block; font-size: 11px; font-weight: bold; padding: 2px 8px; border-radius: 10px; color: #fff; margin-left: 6px; white-space: nowrap; }
+        .ra-type-badge.ra-in { background: #3498db; }
+        .ra-type-badge.ra-out { background: #c0392b; }
+        .ra-type-badge.ra-ret { background: #d35400; }
+        .ra-type-badge.ra-pr { background: #8e44ad; }
+
+        .trend-chart-body { display: flex; align-items: flex-end; justify-content: space-between; gap: 6px; height: 130px; padding-top: 10px; }
+        .trend-day-col { display: flex; flex-direction: column; align-items: center; flex: 1; height: 100%; justify-content: flex-end; }
+        .trend-bars { display: flex; align-items: flex-end; gap: 3px; height: 100px; }
+        .trend-bar { width: 11px; border-radius: 3px 3px 0 0; transition: height .2s; min-height: 2px; }
+        .trend-bar-in { background: #27ae60; }
+        .trend-bar-out { background: #c0392b; }
+        .trend-day-label { font-size: 11px; color: #7f8c8d; margin-top: 6px; }
+        .trend-chart-legend { display: flex; gap: 16px; justify-content: center; margin-top: 10px; font-size: 12px; color: #7f8c8d; }
+        .trend-chart-legend span { display: inline-flex; align-items: center; gap: 5px; }
+        .trend-chart-legend .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+        @media (max-width: 600px) {
+            .dashboard-quick-actions { flex-direction: column; align-items: stretch; }
+            .quick-action-search { max-width: none; }
+        }
 
         /* پێشنیاری دیزاین: سەردێڕی گروپەکانی داشبۆرد */
         .dashboard-group-title { text-align: right; margin: 35px 0 15px 0; font-size: 16px; color: #7f8c8d; border-right: 4px solid #bdc3c7; padding-right: 10px; }
@@ -728,6 +789,21 @@
         <!-- نوێ: KPI-ی تایبەت بە تایبەتمەندی «ئامێرەکانی لای کەسەکان»، تاکو بەڕێوەبەر بەبێ
              کردنەوەی شاشەکە، ڕاستەوخۆ لە داشبۆردەوە بزانێت چەند ئامێر نەگەڕاوەتەوە. -->
         <div class="kpi-card kpi-custody kpi-clickable" onclick="openScreen('screenCustody')" title="کرتە بکە بۆ چوونە شاشەی ئامێرەکانی لای کەسەکان"><span class="kpi-number" id="kpiCustodyOut">-</span><span class="kpi-label">ئامێری لای کەسان</span></div>
+        <!-- نوێ: کارتی KPI‌ی «وەسڵی ئەمڕۆ» — کۆی گشتی وەسڵی هاتوو+ڕۆشتووی ئەمڕۆ، تاکو
+             بەڕێوەبەر بەبێ چوونە شاشەی مێژوو، ڕاستەوخۆ بزانێت ئەمڕۆ چەند مامەڵە کراوە. -->
+        <div class="kpi-card kpi-today kpi-clickable" onclick="openScreen('screenHistory')" title="کرتە بکە بۆ چوونە شاشەی مێژووی وەسڵەکان"><span class="kpi-number" id="kpiTodayVouchers">-</span><span class="kpi-label">وەسڵی ئەمڕۆ (هاتوو+ڕۆشتوو)</span></div>
+    </div>
+
+    <!-- نوێ: بەشی «خێراکاری» — دوگمەی خێرای زۆر بەکارهاتوو (وەسڵی هاتوو/ڕۆشتوو) و
+         خانەیەکی گەڕانی خێرای کاڵا، بۆ ئەوەی کارمەند پێویست نەکات هەمیشە بگەڕێت بۆ
+         کاشییەکانی خوارەوە بۆ کارە زۆر دووبارەبووەکان. -->
+    <div class="dashboard-quick-actions no-print">
+        <button type="button" class="quick-action-btn qa-in" onclick="openScreen('screenInward')">📥 وەسڵی هاتووی خێرا</button>
+        <button type="button" class="quick-action-btn qa-out" onclick="openScreen('screenOutward')">📤 وەسڵی ڕۆشتووی خێرا</button>
+        <div class="quick-action-search">
+            <input type="text" id="dashboardQuickSearch" placeholder="🔍 گەڕان بەدوای کاڵا بە ناو یان کۆد..." oninput="handleDashboardQuickSearch(this.value)" onfocus="handleDashboardQuickSearch(this.value)">
+            <div id="dashboardQuickSearchResults" class="quick-search-results" style="display:none;"></div>
+        </div>
     </div>
 
     <h3 class="dashboard-group-title group-daily">🔵 کاری ڕۆژانە</h3>
@@ -754,6 +830,24 @@
     <div class="dashboard-grid">
         <button class="tile tile-master" id="tile_screenMaster" onclick="openScreen('screenMaster')"><span class="tile-icon"><svg viewBox="0 0 24 24"><path d="M21 8 12 3 3 8l9 5 9-5Z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg></span>پێناسی کاڵا</button>
         <button class="tile tile-settings" id="tile_screenSettings" onclick="openScreen('screenSettings')"><span class="tile-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><circle cx="12" cy="12" r="7.6" stroke-dasharray="1.6 3"/></svg></span>ڕێکخستنەکان</button>
+    </div>
+
+    <!-- نوێ: ڕیزی خوارەوەی داشبۆرد — «دوایین چالاکی» و «چالاکی ٧ ڕۆژە»، بۆ ئەوەی
+         بەکارهێنەر بەبێ چوونە شاشەی مێژوو، ڕاستەوخۆ لە داشبۆردەوە بزانێت دواین کردار
+         چیبووە و ئاڕاستەی گشتی کۆگا لەم هەفتەیەدا چۆنە. -->
+    <div class="dashboard-bottom-grid no-print">
+        <div class="dashboard-panel">
+            <h4>🕓 دوایین چالاکی</h4>
+            <div id="dashboardRecentActivityList"></div>
+        </div>
+        <div class="dashboard-panel">
+            <h4>📈 چالاکی ٧ ڕۆژی ڕابردوو</h4>
+            <div id="dashboardTrendChartBody" class="trend-chart-body"></div>
+            <div class="trend-chart-legend">
+                <span><span class="dot" style="background:#27ae60;"></span> وەسڵی هاتوو</span>
+                <span><span class="dot" style="background:#c0392b;"></span> وەسڵی ڕۆشتوو</span>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -5919,8 +6013,14 @@ var qrcode = function() {
             }
         }
     }
-    document.addEventListener('click', function() {
+    document.addEventListener('click', function(evt) {
         document.querySelectorAll('.cat-actions-menu').forEach(el => { el.style.display = 'none'; });
+        // نوێ: داخستنی خانەی ئەنجامەکانی «گەڕانی خێرا»ی داشبۆرد کاتێک کرتە لە دەرەوەی
+        // خۆی و خانەکە دەکرێت، هەمان شێوازی داخستنی cat-actions-menu بەکاردێت.
+        let qsResults = document.getElementById('dashboardQuickSearchResults');
+        if(qsResults && qsResults.style.display !== 'none' && !evt.target.closest('.quick-action-search')) {
+            qsResults.style.display = 'none';
+        }
     });
 
     // یەک فەنکشنی هاوبەش کە هەردوو شوێنی بەڕێوەبردنی گروپەکان (شاشەی پێناسی کاڵا و شاشەی
@@ -9057,11 +9157,21 @@ var qrcode = function() {
         renderVoucherAttachmentPreview(type);
     }
 
+    // چاککردنی هەڵە: خانەی <input type="datetime-local"> تەنها فۆرماتی "yyyy-MM-ddThh:mm"
+    // قبووڵ دەکات. کاتێک بەهای v.date لە Supabase وەردەگیرێت (ستوونی timestamp/timestamptz)،
+    // بە فۆرماتی "2026-09-07T10:36:00+00:00" یان "2026-09-07 10:36:00" دەگەڕێتەوە، کە خانەکە
+    // ڕەتی دەکاتەوە و خانەکە بەتاڵ دەمێنێتەوە (بۆیە داشبۆرد/فۆرم دروست دیار نەدەکرد).
+    // ئەم فەنکشنە بەها پاک دەکاتەوە پێش دانانی لەناو خانەکە، بەبێ دەستکاری هیچ شوێنێکی تر.
+    function toDatetimeLocalValue(v) {
+        if(!v) return '';
+        return String(v).replace(' ', 'T').substring(0, 16);
+    }
+
     function loadVoucherDataIntoForm(type, v) {
         if(!v) return;
         if(type === 'IN') {
             document.getElementById('inVoucherNo').value = v.voucherNo;
-            document.getElementById('inDate').value = v.date;
+            document.getElementById('inDate').value = toDatetimeLocalValue(v.date);
             document.getElementById('inSupplier').value = v.supplier;
             document.getElementById('inSupplierInvoiceNo').value = v.supplierInvoiceNo || '';
             document.getElementById('inPoNo').value = v.poNo;
@@ -9087,7 +9197,7 @@ var qrcode = function() {
         }
         if(type === 'OUT') {
             document.getElementById('outVoucherNo').value = v.voucherNo;
-            document.getElementById('outDate').value = v.date;
+            document.getElementById('outDate').value = toDatetimeLocalValue(v.date);
             let recType = v.recipientType || 'PROJECT';
             document.getElementById('outRecipientType').value = recType;
             toggleOutRecipientFields();
@@ -9132,7 +9242,7 @@ var qrcode = function() {
         }
         if(type === 'PR') {
             document.getElementById('prVoucherNo').value = v.voucherNo;
-            document.getElementById('prDate').value = v.date;
+            document.getElementById('prDate').value = toDatetimeLocalValue(v.date);
             document.getElementById('prRequestedBy').value = v.requestedBy;
             document.getElementById('prStatusSelect').value = v.status || 'PENDING';
             document.getElementById('prSupplier').value = v.supplier || '';
@@ -9169,7 +9279,7 @@ var qrcode = function() {
         }
         if(type === 'RET') {
             document.getElementById('retVoucherNo').value = v.voucherNo;
-            document.getElementById('retDate').value = v.date;
+            document.getElementById('retDate').value = toDatetimeLocalValue(v.date);
             document.getElementById('retType').value = v.type;
             document.getElementById('retLocation').value = v.location;
             document.getElementById('retCurrency').value = v.curr || CURRENCY_CODE;
@@ -11031,17 +11141,25 @@ var qrcode = function() {
         let pendingPR = prVouchers.filter(v => v.status !== 'COMPLETED').length;
         // نوێ: ژمارەی ئامێر/سامانی هێشتا لای کەسان (نەگەڕاوەتەوە)، بۆ KPI-ی نوێی داشبۆرد.
         let custodyOutCount = custodyRecords.filter(c => c.status === 'OUT').length;
+        // نوێ: کۆی گشتی وەسڵی هاتوو+ڕۆشتووی ئەمڕۆ، بۆ KPI-ی «وەسڵی ئەمڕۆ». بەراورد
+        // لەسەر بەشی بەرواری (بەبێ کاتژمێر) دەکرێت، تاکو وەسڵی هەر کاتژمێرێکی ئەمڕۆ
+        // بژمێردرێت، نەک تەنها یەک ساتی تایبەت.
+        let todayKey = getLocalDateTimeString().split(' ')[0];
+        let todayVouchersCount = inwardVouchers.filter(v => (v.date || '').split(' ')[0] === todayKey).length
+            + outwardVouchers.filter(v => (v.date || '').split(' ')[0] === todayKey).length;
 
         let elTotal = document.getElementById('kpiTotalValue');
         let elLow = document.getElementById('kpiLowStock');
         let elPR = document.getElementById('kpiPendingPR');
         let elItems = document.getElementById('kpiItemCount');
         let elCustody = document.getElementById('kpiCustodyOut');
+        let elToday = document.getElementById('kpiTodayVouchers');
         if(elTotal) elTotal.textContent = formatCurrency(totalValue, CURRENCY_CODE);
         if(elLow) elLow.textContent = lowStockCount;
         if(elPR) elPR.textContent = pendingPR;
         if(elItems) elItems.textContent = inventory.length;
         if(elCustody) elCustody.textContent = custodyOutCount;
+        if(elToday) elToday.textContent = todayVouchersCount;
 
         // نوێ (خاڵی ٢ی داواکراو): نوێکردنەوەی نیشانەی بچووکی سوور (Badge) لەسەر کاشیی
         // «داواکاری کڕین» بە هەمان ژمارەی چاوەڕوان — تەنها کاتێک زیاترە لە سفر دەردەکەوێت.
@@ -11050,6 +11168,118 @@ var qrcode = function() {
             if(pendingPR > 0) { prBadge.textContent = pendingPR > 99 ? '99+' : pendingPR; prBadge.classList.add('show'); }
             else { prBadge.classList.remove('show'); }
         }
+
+        // نوێ: نوێکردنەوەی دوو بەشی نوێی خوارەوەی داشبۆرد (دوایین چالاکی + گرافی ٧ ڕۆژە)
+        // هەر کاتێک KPI‌ەکان نوێ دەکرێنەوە (دوای هەر پاشکەوتکردنێک، دوای بارکردنی
+        // داتا، دوای چوونەژوورەوە)، تاکو هەمیشە داتای نوێ نیشان بدەن.
+        if(typeof renderDashboardRecentActivity === 'function') renderDashboardRecentActivity();
+        if(typeof renderDashboardTrendChart === 'function') renderDashboardTrendChart();
+    }
+
+    // نوێ: پیشاندانی دوایین ٨ چالاکی (هاتوو/ڕۆشتوو/گەڕانەوە/داواکاری کڕین) لەسەر
+    // داشبۆردی سەرەکی، ڕیزکراو لەسەر بنەمای بەروار (نوێترین سەرەوە)، بۆ ئەوەی
+    // بەکارهێنەر بەبێ چوونە شاشەی «مێژوو»، ڕاستەوخۆ بزانێت دواین کردار چیبووە. تەنها
+    // ئەو ٤ جۆرە بەکاردێت کە viewVoucher() پشتگیرییان دەکات، تاکو کرتەکردن ڕاستەوخۆ
+    // وردەکارییەکانی وەسڵ لە مۆدالدا پیشان بدات.
+    function renderDashboardRecentActivity() {
+        let container = document.getElementById('dashboardRecentActivityList');
+        if(!container) return;
+        let items = [];
+        inwardVouchers.forEach(v => items.push({ type: 'IN', vNo: v.voucherNo, date: v.date, label: '📥 هاتوو', party: v.supplier || '', cls: 'ra-in' }));
+        outwardVouchers.forEach(v => items.push({ type: 'OUT', vNo: v.voucherNo, date: v.date, label: '📤 ڕۆشتوو', party: v.project || '', cls: 'ra-out' }));
+        returnVouchers.forEach(v => items.push({ type: 'RET', vNo: v.voucherNo, date: v.date, label: '↩️ گەڕانەوە', party: v.location || '', cls: 'ra-ret' }));
+        prVouchers.forEach(v => items.push({ type: 'PR', vNo: v.voucherNo, date: v.date, label: '📋 داواکاری', party: v.requestedBy || '', cls: 'ra-pr' }));
+        items.sort((a, b) => parseStoredDate(b.date).getTime() - parseStoredDate(a.date).getTime());
+        items = items.slice(0, 8);
+        if(items.length === 0) {
+            container.innerHTML = '<div style="text-align:center; color:#adb5bd; padding:15px;">هیچ چالاکییەک هێشتا تۆمار نەکراوە</div>';
+            return;
+        }
+        container.innerHTML = items.map(it => `
+            <div class="recent-activity-item" onclick="viewVoucher('${it.type}','${escapeForJsAttr(it.vNo)}')">
+                <span><span class="ra-type-badge ${it.cls}">${it.label}</span>${escapeHtml(it.vNo)}${it.party ? ' - ' + escapeHtml(it.party) : ''}</span>
+                <span style="color:#adb5bd; font-size:12px; white-space:nowrap;">${escapeHtml(String(it.date || '').split(' ')[0])}</span>
+            </div>`).join('');
+    }
+
+    // نوێ: گرافی سادەی ستوونی (بار چارت) بۆ ژمارەی وەسڵی هاتوو/ڕۆشتووی ٧ ڕۆژی
+    // ڕابردوو (لەگەڵ ئەمڕۆ)، بۆ پیشاندانی ئاڕاستەی گشتی چالاکی کۆگا بەشێوەیەکی
+    // خێرا لەسەر داشبۆرد. ژمارەی وەسڵ بەکاردێت (نەک بەهای دراو) چونکە وەسڵەکان
+    // دەکرێت چەند دراوی جیاواز (IQD/USD) هەبن کە کۆکردنەوەی بەهایان پێکەوە بێواتایە.
+    function renderDashboardTrendChart() {
+        let body = document.getElementById('dashboardTrendChartBody');
+        if(!body) return;
+        let days = [];
+        for(let i = 6; i >= 0; i--) {
+            let d = new Date();
+            d.setDate(d.getDate() - i);
+            let key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+            days.push({ key: key, dateObj: d, inCount: 0, outCount: 0 });
+        }
+        let byKey = {};
+        days.forEach(dd => { byKey[dd.key] = dd; });
+        function dayKeyOf(dateStr) {
+            let d = parseStoredDate(dateStr);
+            if(isNaN(d.getTime())) return null;
+            return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+        }
+        inwardVouchers.forEach(v => { let k = dayKeyOf(v.date); if(byKey[k]) byKey[k].inCount++; });
+        outwardVouchers.forEach(v => { let k = dayKeyOf(v.date); if(byKey[k]) byKey[k].outCount++; });
+
+        let maxCount = 1;
+        days.forEach(dd => { maxCount = Math.max(maxCount, dd.inCount, dd.outCount); });
+        const WEEKDAY_NAMES_KU = ['یەکشەممە', 'دووشەممە', 'سێشەممە', 'چوارشەممە', 'پێنجشەممە', 'هەینی', 'شەممە'];
+        body.innerHTML = days.map(dd => {
+            let inH = Math.round((dd.inCount / maxCount) * 100);
+            let outH = Math.round((dd.outCount / maxCount) * 100);
+            let label = WEEKDAY_NAMES_KU[dd.dateObj.getDay()];
+            return `
+                <div class="trend-day-col" title="${label}: هاتوو ${dd.inCount} | ڕۆشتوو ${dd.outCount}">
+                    <div class="trend-bars">
+                        <div class="trend-bar trend-bar-in" style="height:${dd.inCount > 0 ? Math.max(inH, 4) : 0}%;"></div>
+                        <div class="trend-bar trend-bar-out" style="height:${dd.outCount > 0 ? Math.max(outH, 4) : 0}%;"></div>
+                    </div>
+                    <div class="trend-day-label">${label}</div>
+                </div>`;
+        }).join('');
+    }
+
+    // نوێ: گەڕانی خێرای کاڵا لەسەر داشبۆرد (بەبێ پێویستی چوونە شاشەی باڵانسی کۆگا
+    // پێش گەڕان). لە کاتی نووسیندا، ناو/کۆدی کاڵا بەراورد دەکرێت (بە
+    // normalizeNameForCompare، هەمان فەنکشنی هەموو شوێنی تری گەڕانی کۆدەکە)، و
+    // کرتەکردن لەسەر ئەنجامێک ڕاستەوخۆ دەبات بۆ وردەکارییەکانی ئەو کاڵایە.
+    function handleDashboardQuickSearch(text) {
+        let resultsBox = document.getElementById('dashboardQuickSearchResults');
+        if(!resultsBox) return;
+        let q = (text || '').trim();
+        if(q.length < 2) { resultsBox.style.display = 'none'; resultsBox.innerHTML = ''; return; }
+        let qNorm = normalizeNameForCompare(q);
+        let matches = inventory.filter(it => it.active !== false &&
+            (normalizeNameForCompare(it.name).includes(qNorm) || normalizeNameForCompare(it.code).includes(qNorm))
+        ).slice(0, 8);
+        if(matches.length === 0) {
+            resultsBox.innerHTML = '<div class="quick-search-empty">هیچ کاڵایەک نەدۆزرایەوە</div>';
+            resultsBox.style.display = 'block';
+            return;
+        }
+        resultsBox.innerHTML = matches.map(it => `
+            <div class="quick-search-item" onclick="goToDashboardSearchResult('${escapeForJsAttr(it.code)}')">
+                <span>${escapeHtml(it.name)}</span>
+                <span style="color:#adb5bd; font-size:12px;">${escapeHtml(it.code)}</span>
+            </div>`).join('');
+        resultsBox.style.display = 'block';
+    }
+
+    // یارمەتیدەر: داخستنی خانەی گەڕانی خێرا و چوونە شاشەی باڵانسی کۆگا + کردنەوەی
+    // وردەکارییەکانی کاڵای هەڵبژێردراو (viewItemDrillDown پێویستی بەوەیە screenStock
+    // پێشتر کراوە بێت، چونکە بۆکسەکەی ناو ئەو شاشەیەیە).
+    function goToDashboardSearchResult(itemCode) {
+        let input = document.getElementById('dashboardQuickSearch');
+        let resultsBox = document.getElementById('dashboardQuickSearchResults');
+        if(input) input.value = '';
+        if(resultsBox) { resultsBox.style.display = 'none'; resultsBox.innerHTML = ''; }
+        openScreen('screenStock');
+        viewItemDrillDown(itemCode);
     }
 
 
@@ -13318,11 +13548,23 @@ async function deleteVoucherFromSupabase(type, vNo) {
 // بکرێت، تەنها ئەو کاڵایانە دەنێردرێن (upsert)، بەبێ دەستکاری هیچ ڕیزێکی تر.
 // ئەگەر نەدرابێت (بۆ پاراستنی گونجاندن لەگەڵ بانگکردنە کۆنەکان)، وەک پێشتر
 // هەموو inventory دەنێردرێت.
+// چاککردنی هەڵە: Postgres/Supabase کاتێک upsert (ON CONFLICT DO UPDATE) دەکرێت و لەناو
+// یەک ئۆرەیدا دوو ڕیز یان زیاتر هەمان کلیلی conflict (بۆ نموونە هەمان code/voucher_no/id/name)
+// هەبن، هەڵەی "UPDATE command cannot affect row a second time" دەدات، چونکە Postgres
+// ناتوانێت لە یەک فەرمانی UPDATE‌دا هەمان ڕیز دوو جار بگۆڕێت. ئەم فەنکشنە پێش هەر upsert‌ێک
+// ئۆرەکە یەکتا دەکاتەوە لەسەر بنەمای کلیلەکە (دوایین نموونەی هەر کلیلێک دەمێنێتەوە، چونکە
+// ئەوە نوێترین گۆڕانکارییە)، بەبێ دەستکاری هیچ لۆژیکێکی تر.
+function dedupeByKey(arr, keyFn) {
+    let map = new Map();
+    (arr || []).forEach(item => map.set(keyFn(item), item));
+    return [...map.values()];
+}
+
 async function syncInventoryToSupabase(specificItems) {
     try {
         let itemsToSync = (specificItems && specificItems.length) ? specificItems : inventory;
         if(itemsToSync.length) {
-            const { error } = await sb.from('inventory').upsert(itemsToSync.map(invToDb), { onConflict: 'code' });
+            const { error } = await sb.from('inventory').upsert(dedupeByKey(itemsToSync, x => x.code).map(invToDb), { onConflict: 'code' });
             if(error) throw error;
         }
     } catch(e) { console.error('sync inventory failed', e); alert('⚠️ هەڵە لە هاوکاتکردنی کاڵا لەگەڵ Supabase: ' + e.message); }
@@ -13352,7 +13594,7 @@ async function syncInwardToSupabase(specificVouchers) {
     try {
         let vouchersToSync = (specificVouchers && specificVouchers.length) ? specificVouchers : inwardVouchers;
         if(vouchersToSync.length) {
-            const { error } = await sb.from('inward_vouchers').upsert(vouchersToSync.map(inwardToDb), { onConflict: 'voucher_no' });
+            const { error } = await sb.from('inward_vouchers').upsert(dedupeByKey(vouchersToSync, x => x.voucherNo).map(inwardToDb), { onConflict: 'voucher_no' });
             if(error) throw error;
         }
     } catch(e) { console.error('sync inward failed', e); alert('⚠️ هەڵە لە هاوکاتکردنی وەسڵی هاتن: ' + e.message); }
@@ -13373,7 +13615,7 @@ async function syncOutwardToSupabase(specificVouchers) {
     try {
         let vouchersToSync = (specificVouchers && specificVouchers.length) ? specificVouchers : outwardVouchers;
         if(vouchersToSync.length) {
-            const { error } = await sb.from('outward_vouchers').upsert(vouchersToSync.map(outwardToDb), { onConflict: 'voucher_no' });
+            const { error } = await sb.from('outward_vouchers').upsert(dedupeByKey(vouchersToSync, x => x.voucherNo).map(outwardToDb), { onConflict: 'voucher_no' });
             if(error) throw error;
         }
     } catch(e) { console.error('sync outward failed', e); alert('⚠️ هەڵە لە هاوکاتکردنی وەسڵی دەرچوون: ' + e.message); }
@@ -13398,7 +13640,7 @@ async function syncPRToSupabase(specificVouchers) {
     try {
         let vouchersToSync = (specificVouchers && specificVouchers.length) ? specificVouchers : prVouchers;
         if(vouchersToSync.length) {
-            const { error } = await sb.from('pr_vouchers').upsert(vouchersToSync.map(prToDb), { onConflict: 'voucher_no' });
+            const { error } = await sb.from('pr_vouchers').upsert(dedupeByKey(vouchersToSync, x => x.voucherNo).map(prToDb), { onConflict: 'voucher_no' });
             if(error) throw error;
         }
     } catch(e) { console.error('sync pr failed', e); alert('⚠️ هەڵە لە هاوکاتکردنی داواکاری کڕین: ' + e.message); }
@@ -13417,7 +13659,7 @@ async function syncReturnToSupabase(specificVouchers) {
     try {
         let vouchersToSync = (specificVouchers && specificVouchers.length) ? specificVouchers : returnVouchers;
         if(vouchersToSync.length) {
-            const { error } = await sb.from('return_vouchers').upsert(vouchersToSync.map(returnToDb), { onConflict: 'voucher_no' });
+            const { error } = await sb.from('return_vouchers').upsert(dedupeByKey(vouchersToSync, x => x.voucherNo).map(returnToDb), { onConflict: 'voucher_no' });
             if(error) throw error;
         }
     } catch(e) { console.error('sync return failed', e); alert('⚠️ هەڵە لە هاوکاتکردنی گەڕانەوە: ' + e.message); }
@@ -13436,7 +13678,7 @@ async function syncAdjustmentToSupabase(specificVouchers) {
     try {
         let vouchersToSync = (specificVouchers && specificVouchers.length) ? specificVouchers : adjustmentVouchers;
         if(vouchersToSync.length) {
-            const { error } = await sb.from('adjustment_vouchers').upsert(vouchersToSync.map(adjToDb), { onConflict: 'voucher_no' });
+            const { error } = await sb.from('adjustment_vouchers').upsert(dedupeByKey(vouchersToSync, x => x.voucherNo).map(adjToDb), { onConflict: 'voucher_no' });
             if(error) throw error;
         }
     } catch(e) { console.error('sync adjustment failed', e); alert('⚠️ هەڵە لە هاوکاتکردنی چاکسازی: ' + e.message); }
@@ -13467,7 +13709,7 @@ async function syncCustodyToSupabase(specificRecords) {
     try {
         let recordsToSync = (specificRecords && specificRecords.length) ? specificRecords : custodyRecords;
         if(recordsToSync.length) {
-            const { error } = await sb.from('custody_records').upsert(recordsToSync.map(custodyToDb), { onConflict: 'id' });
+            const { error } = await sb.from('custody_records').upsert(dedupeByKey(recordsToSync, x => x.id).map(custodyToDb), { onConflict: 'id' });
             if(error) throw error;
         }
     } catch(e) { console.error('sync custody failed', e); alert('⚠️ هەڵە لە هاوکاتکردنی ئامێرەکانی لای کەسەکان: ' + e.message); }
@@ -13508,7 +13750,7 @@ async function syncSimpleList(table, arr) {
     try {
         const currentNames = arr || [];
         if(currentNames.length) {
-            const { error } = await sb.from(table).upsert(currentNames.map(name => ({ name })), { onConflict: 'name' });
+            const { error } = await sb.from(table).upsert(dedupeByKey(currentNames, name => name).map(name => ({ name })), { onConflict: 'name' });
             if(error) throw error;
         }
     } catch(e) { console.error('sync ' + table + ' failed', e); }
@@ -13530,7 +13772,7 @@ async function syncPersonsToSupabase() {
     try {
         if(persons.length) {
             const rows = persons.map(p => ({ name: p.name, grade: p.grade || null, department: p.department || null }));
-            const { error } = await sb.from('persons').upsert(rows, { onConflict: 'name' });
+            const { error } = await sb.from('persons').upsert(dedupeByKey(rows, x => x.name), { onConflict: 'name' });
             if(error) throw error;
         }
     } catch(e) { console.error('sync persons failed', e); alert('⚠️ هەڵە لە هاوکاتکردنی کەسەکان: ' + e.message); }
