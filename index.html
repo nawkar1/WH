@@ -94,8 +94,8 @@
         .tile-icon svg { width: 28px; height: 28px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 
         /* پێشنیاری دیزاین: کارتی زانیاری خێرا (KPI) بۆ داشبۆرد */
-        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 18px; margin: 30px 0; }
-        .kpi-card { background: white; border-radius: 10px; padding: 18px 10px; box-shadow: 0 1px 3px rgba(0,0,0,.04); border: 1px solid #eceef1; border-bottom: 3px solid #bdc3c7; display: flex; flex-direction: column; transition: transform .15s, box-shadow .15s, border-color .15s; }
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 18px 0; }
+        .kpi-card { background: white; border-radius: 10px; padding: 12px 8px; box-shadow: 0 1px 3px rgba(0,0,0,.04); border: 1px solid #eceef1; border-bottom: 3px solid #bdc3c7; display: flex; flex-direction: column; transition: transform .15s, box-shadow .15s, border-color .15s; }
         /* نوێ: کارتی KPI ئێستا کرتەکراوە (خاڵی ١ی داواکراو) — دەبڕژێتەوە بۆ شاشەی پەیوەندیدار.
            هەمان هەستی hover‌ی کاشییەکان بەکاردێت، بۆ یەکگرتوویی دیمەن. */
         .kpi-card.kpi-clickable { cursor: pointer; }
@@ -113,8 +113,8 @@
             box-shadow: 0 2px 6px rgba(0,0,0,.25); border: 2px solid #fff;
         }
         .tile-badge.show { display: flex; }
-        .kpi-card .kpi-number { font-size: 28px; font-weight: bold; color: #2c3e50; }
-        .kpi-card .kpi-label { font-size: 13px; color: #7f8c8d; margin-top: 5px; }
+        .kpi-card .kpi-number { font-size: 19px; font-weight: bold; color: #2c3e50; }
+        .kpi-card .kpi-label { font-size: 11px; color: #7f8c8d; margin-top: 3px; }
         .kpi-value { border-bottom-color: #27ae60; }
         .kpi-lowstock { border-bottom-color: #e74c3c; }
         .kpi-pr { border-bottom-color: #9b59b6; }
@@ -141,10 +141,10 @@
            بەبێ پێویستی بە خوێندنەوەی تەواوی تێکست، و یەکگرتوویی دیمەن لەگەڵ کاشییەکانی
            خوارەوە بپارێزرێت. */
         .kpi-card-icon {
-            width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center;
-            justify-content: center; margin: 0 auto 8px; background: #f0f2f5; color: #7f8c8d;
+            width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center;
+            justify-content: center; margin: 0 auto 5px; background: #f0f2f5; color: #7f8c8d;
         }
-        .kpi-card-icon svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+        .kpi-card-icon svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
         .kpi-today .kpi-card-icon { background: rgba(41,128,185,.12); color: #2980b9; }
         .kpi-lastmove .kpi-card-icon { background: rgba(41,128,185,.12); color: #2980b9; }
         .kpi-approved7d .kpi-card-icon { background: rgba(41,128,185,.12); color: #2980b9; }
@@ -850,19 +850,6 @@
              چاکسازی/داواکاری)، تاکو بەڕێوەبەر ڕاستەوخۆ بزانێت دوایین جار کەی کارێک
              کراوە. ئەگەر هیچ وەسڵێک تۆمار نەکرابێت، "هیچ" پیشان دەدرێت. -->
         <div class="kpi-card kpi-lastmove kpi-clickable" onclick="openScreen('screenHistory')" title="کرتە بکە بۆ چوونە شاشەی مێژوو"><span class="kpi-card-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2"/><path d="M9 2h6"/></svg></span><span class="kpi-number" id="kpiLastMovement">-</span><span class="kpi-label">دوایین جوڵەی کۆگا</span></div>
-    </div>
-
-
-    <!-- نوێ: بەشی «خێراکاری» — دوگمەی خێرای زۆر بەکارهاتوو (وەسڵی هاتوو/ڕۆشتوو) و
-         خانەیەکی گەڕانی خێرای کاڵا، بۆ ئەوەی کارمەند پێویست نەکات هەمیشە بگەڕێت بۆ
-         کاشییەکانی خوارەوە بۆ کارە زۆر دووبارەبووەکان. -->
-    <div class="dashboard-quick-actions no-print">
-        <button type="button" class="quick-action-btn qa-in" onclick="openScreen('screenInward')">📥 وەسڵی هاتووی خێرا</button>
-        <button type="button" class="quick-action-btn qa-out" onclick="openScreen('screenOutward')">📤 وەسڵی ڕۆشتووی خێرا</button>
-        <div class="quick-action-search">
-            <input type="text" id="dashboardQuickSearch" placeholder="🔍 گەڕان بەدوای کاڵا بە ناو یان کۆد..." oninput="handleDashboardQuickSearch(this.value)" onfocus="handleDashboardQuickSearch(this.value)">
-            <div id="dashboardQuickSearchResults" class="quick-search-results" style="display:none;"></div>
-        </div>
     </div>
 
     <h3 class="dashboard-group-title group-daily">🔵 کاری ڕۆژانە</h3>
@@ -11257,7 +11244,19 @@ var qrcode = function() {
         let lastMovementLabel = 'هیچ';
         if(allMoveDates.length > 0) {
             let latest = allMoveDates.reduce((a, b) => parseStoredDate(b).getTime() > parseStoredDate(a).getTime() ? b : a);
-            lastMovementLabel = String(latest).split(' ')[0];
+            // چاککردنی هەڵە: پێشتر تەنها latest.split(' ')[0] بەکاردەهات، کە پێشبینی
+            // دەکرد بەروارەکە هەمیشە بەم فۆرماتەیە "YYYY-MM-DD HH:MM" (بۆشایی نێوان
+            // بەروار و کات). بەڵام ئەگەر ئەم بەرواره لە ستوونێکی timestamp/timestamptz‌ی
+            // ڕاستەقینەی Supabase هاتبووایە، بە فۆرماتی ISO دەگەڕایەوە بە پیتی "T" وەک
+            // "2026-09-07T16:44:00+00:00" — کە هیچ بۆشاییەکی تێدا نییە، بۆیە
+            // .split(' ')[0] هیچ کارێکی نەدەکرد و دەقی خاوی تەواو وەک خۆی دەردەکەوت.
+            // ئێستا parseStoredDate() بەکاردێت (کە هەردوو فۆرمات بە دروستی دەگۆڕێت بۆ
+            // Date ڕاستەقینە)، پاشان بە فۆرماتێکی جوان و ڕوون دەردەبرێت.
+            let d = parseStoredDate(latest);
+            if(!isNaN(d.getTime())) {
+                let pad = n => String(n).padStart(2, '0');
+                lastMovementLabel = `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
+            }
         }
 
         // نوێ: ژمارەی داواکاری کڕینی پەسەندکراو (status2 === 'approved') کە لە ماوەی ٧
