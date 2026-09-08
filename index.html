@@ -120,8 +120,35 @@
         .kpi-pr { border-bottom-color: #9b59b6; }
         .kpi-items { border-bottom-color: #3498db; }
         .kpi-custody { border-bottom-color: #8d6e63; }
-        /* نوێ: ڕەنگی کارتی KPI‌ی «وەسڵی ئەمڕۆ»، هەمان زمانی دیزاینی کارتەکانی تر بەکاردێنێت. */
+        /* نوێ: ڕەنگی کارتی KPI‌ی «مامەڵەی ئەمڕۆ»، هەمان زمانی دیزاینی کارتەکانی تر بەکاردێنێت. */
         .kpi-today { border-bottom-color: #16a085; }
+        /* نوێ: ڕەنگی ٣ کارتی زانیاری زیاتری ڕیزی دووەم. */
+        .kpi-lastmove { border-bottom-color: #607d8b; }
+        .kpi-approved7d { border-bottom-color: #2980b9; }
+        .kpi-deadstock { border-bottom-color: #d35400; }
+
+        /* نوێ (وێنەی نموونە): کارتەکانی داشبۆردی سەرەکی ئێستا بە ٢ ڕیزی جیاواز
+           دادەڕشترێن — ڕیزی یەکەم (٥ کارتی سەرەکی) و ڕیزی دووەم (٤ کارتی زانیاری
+           زیاتر)، هەمان وێنەی نموونەی نێردراو، بەبێ کاریگەری لەسەر بەکارهێنانی تری
+           .kpi-grid لە شوێنی تردا (وەک stockSummaryReportBox). */
+        .kpi-grid-row1 { grid-template-columns: repeat(5, 1fr); }
+        .kpi-grid-row2 { grid-template-columns: repeat(4, 1fr); }
+        @media (max-width: 900px) { .kpi-grid-row1, .kpi-grid-row2 { grid-template-columns: repeat(3, 1fr); } }
+        @media (max-width: 600px) { .kpi-grid-row1, .kpi-grid-row2 { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 380px) { .kpi-grid-row1, .kpi-grid-row2 { grid-template-columns: 1fr; } }
+        /* نوێ: ئایکۆنی بچووکی هەر کارتی KPI‌یەک، هەمان زمانی دیزاینی .tile-icon بەکاردێت
+           (بازنەیەکی سووکی هەمان ڕەنگی کارتەکە) بۆ ئەوەی کارتەکان زووتر بناسرێنەوە
+           بەبێ پێویستی بە خوێندنەوەی تەواوی تێکست، و یەکگرتوویی دیمەن لەگەڵ کاشییەکانی
+           خوارەوە بپارێزرێت. */
+        .kpi-card-icon {
+            width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center;
+            justify-content: center; margin: 0 auto 8px; background: #f0f2f5; color: #7f8c8d;
+        }
+        .kpi-card-icon svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+        .kpi-today .kpi-card-icon { background: rgba(22,160,133,.12); color: #16a085; }
+        .kpi-lastmove .kpi-card-icon { background: rgba(96,125,139,.12); color: #607d8b; }
+        .kpi-approved7d .kpi-card-icon { background: rgba(41,128,185,.12); color: #2980b9; }
+        .kpi-deadstock .kpi-card-icon { background: rgba(211,84,0,.12); color: #d35400; }
 
         /* نوێ: بەشی «خێراکاری» (Quick Actions) لەسەرووی داشبۆرد — دوگمەی خێرای زۆر
            بەکارهاتوو + خانەیەکی گەڕانی خێرای کاڵا، بۆ ئەوەی کارمەند پێویست نەکات
@@ -778,21 +805,40 @@
 
     <!-- پێشنیاری دیزاین: کارتی زانیاری خێرا (KPI) زیادکرا سەرووی کاشییەکان، تاکو داشبۆرد
          تەنها ناڤیگەیشن نەبێت بەڵکو زانیاری خێرای سوودبەخشیش پیشان بدات. -->
-    <div class="kpi-grid">
-        <!-- چاککردنی هەڵەی UX (خاڵی ١ی داواکراو): پێشتر ئەم کارتانە تەنها ژمارە پیشان
-             دەدان بەبێ هیچ کرتەکردنێک — بەکارهێنەر دەبووایە دووبارە بەدوای کاشییەکەدا
-             بگەڕێت لە خوارەوە. ئێستا کرتەکردن ڕاستەوخۆ دەبات بۆ شاشەی پەیوەندیدار. -->
-        <div class="kpi-card kpi-value kpi-clickable" onclick="openScreen('screenStock')" title="کرتە بکە بۆ چوونە شاشەی باڵانسی ئێستا"><span class="kpi-number" id="kpiTotalValue">-</span><span class="kpi-label">کۆی گشتی بەهای کۆگا</span></div>
-        <div class="kpi-card kpi-lowstock kpi-clickable" onclick="openScreen('screenStock')" title="کرتە بکە بۆ چوونە شاشەی باڵانسی ئێستا"><span class="kpi-number" id="kpiLowStock">-</span><span class="kpi-label">کاڵای کەم لە کۆگا</span></div>
-        <div class="kpi-card kpi-pr kpi-clickable" onclick="openScreen('screenPR')" title="کرتە بکە بۆ چوونە شاشەی داواکاری کڕین"><span class="kpi-number" id="kpiPendingPR">-</span><span class="kpi-label">داواکاری چاوەڕوان</span></div>
-        <div class="kpi-card kpi-items kpi-clickable" onclick="openScreen('screenMaster')" title="کرتە بکە بۆ چوونە شاشەی پێناسی کاڵا"><span class="kpi-number" id="kpiItemCount">-</span><span class="kpi-label">کۆی گشتی جۆری کاڵا</span></div>
+    <!-- پێشنیاری دیزاین: کارتی زانیاری خێرا (KPI) زیادکرا سەرووی کاشییەکان، تاکو داشبۆرد
+         تەنها ناڤیگەیشن نەبێت بەڵکو زانیاری خێرای سوودبەخشیش پیشان بدات.
+         نوێ (وێنەی نموونە): ئێستا بە ٢ ڕیز دابەشکراوە — ڕیزی یەکەم (٥ کارتی سەرەکی،
+         بەبێ ئایکۆن، تەنها هێڵی ڕەنگاوڕەنگی خوارەوە) و ڕیزی دووەم (٤ کارتی زانیاری
+         زیاتر لەگەڵ ئایکۆن)، هەمان وێنەی نموونەی نێردراو. -->
+    <div class="kpi-grid kpi-grid-row1">
         <!-- نوێ: KPI-ی تایبەت بە تایبەتمەندی «ئامێرەکانی لای کەسەکان»، تاکو بەڕێوەبەر بەبێ
              کردنەوەی شاشەکە، ڕاستەوخۆ لە داشبۆردەوە بزانێت چەند ئامێر نەگەڕاوەتەوە. -->
         <div class="kpi-card kpi-custody kpi-clickable" onclick="openScreen('screenCustody')" title="کرتە بکە بۆ چوونە شاشەی ئامێرەکانی لای کەسەکان"><span class="kpi-number" id="kpiCustodyOut">-</span><span class="kpi-label">ئامێری لای کەسان</span></div>
-        <!-- نوێ: کارتی KPI‌ی «وەسڵی ئەمڕۆ» — کۆی گشتی وەسڵی هاتوو+ڕۆشتووی ئەمڕۆ، تاکو
-             بەڕێوەبەر بەبێ چوونە شاشەی مێژوو، ڕاستەوخۆ بزانێت ئەمڕۆ چەند مامەڵە کراوە. -->
-        <div class="kpi-card kpi-today kpi-clickable" onclick="openScreen('screenHistory')" title="کرتە بکە بۆ چوونە شاشەی مێژووی وەسڵەکان"><span class="kpi-number" id="kpiTodayVouchers">-</span><span class="kpi-label">وەسڵی ئەمڕۆ (هاتوو+ڕۆشتوو)</span></div>
+        <div class="kpi-card kpi-items kpi-clickable" onclick="openScreen('screenMaster')" title="کرتە بکە بۆ چوونە شاشەی پێناسی کاڵا"><span class="kpi-number" id="kpiItemCount">-</span><span class="kpi-label">کۆی گشتی جۆری کاڵا</span></div>
+        <div class="kpi-card kpi-pr kpi-clickable" onclick="openScreen('screenPR')" title="کرتە بکە بۆ چوونە شاشەی داواکاری کڕین"><span class="kpi-number" id="kpiPendingPR">-</span><span class="kpi-label">داواکاری چاوەڕوان</span></div>
+        <!-- چاککردنی هەڵەی UX (خاڵی ١ی داواکراو): پێشتر ئەم کارتانە تەنها ژمارە پیشان
+             دەدان بەبێ هیچ کرتەکردنێک — بەکارهێنەر دەبووایە دووبارە بەدوای کاشییەکەدا
+             بگەڕێت لە خوارەوە. ئێستا کرتەکردن ڕاستەوخۆ دەبات بۆ شاشەی پەیوەندیدار. -->
+        <div class="kpi-card kpi-lowstock kpi-clickable" onclick="openScreen('screenStock')" title="کرتە بکە بۆ چوونە شاشەی باڵانسی ئێستا"><span class="kpi-number" id="kpiLowStock">-</span><span class="kpi-label">کاڵای کەم لە کۆگا</span></div>
+        <div class="kpi-card kpi-value kpi-clickable" onclick="openScreen('screenStock')" title="کرتە بکە بۆ چوونە شاشەی باڵانسی ئێستا"><span class="kpi-number" id="kpiTotalValue">-</span><span class="kpi-label">کۆی گشتی بەهای کۆگا</span></div>
     </div>
+    <div class="kpi-grid kpi-grid-row2">
+        <!-- نوێ: بەرواری دوایین جوڵەی کۆگا (هەر جۆرە وەسڵێک — هاتوو/ڕۆشتوو/گەڕانەوە/
+             چاکسازی/داواکاری)، تاکو بەڕێوەبەر ڕاستەوخۆ بزانێت دوایین جار کەی کارێک
+             کراوە. ئەگەر هیچ وەسڵێک تۆمار نەکرابێت، "هیچ" پیشان دەدرێت. -->
+        <div class="kpi-card kpi-lastmove kpi-clickable" onclick="openScreen('screenHistory')" title="کرتە بکە بۆ چوونە شاشەی مێژوو"><span class="kpi-card-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2"/><path d="M9 2h6"/></svg></span><span class="kpi-number" id="kpiLastMovement">-</span><span class="kpi-label">دوایین جوڵەی کۆگا</span></div>
+        <!-- نوێ: ژمارەی داواکاری کڕینی پەسەندکراو (status2 === 'approved') کە لە ماوەی
+             ٧ ڕۆژی ڕابردوودا (approvedAt) پەسەندکراوە — پەسەندکردنی ڕاستەقینەی ئەدمین،
+             نەک ئەو هەڵبژاردنە خاوەی کە لەناو خودی داواکاریدروستکردندا هەیە. -->
+        <div class="kpi-card kpi-approved7d kpi-clickable" onclick="openScreen('screenPR')" title="کرتە بکە بۆ چوونە شاشەی داواکاری کڕین"><span class="kpi-card-icon"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg></span><span class="kpi-number" id="kpiApproved7d">-</span><span class="kpi-label">پەسەندکراو (٧ ڕۆژی ڕابردوو)</span></div>
+        <!-- نوێ: ژمارەی کاڵای خاو/مردوو، هەمان بنەمای ژماردنی ڕاپۆرتی «کاڵای خاو/مردوو»
+             بەکاردێت (باڵانس > 0، چالاک، تەمەنی دوایین دەرچوون >= ٩٠ ڕۆژ). -->
+        <div class="kpi-card kpi-deadstock kpi-clickable" onclick="openScreen('screenStock')" title="کرتە بکە بۆ چوونە ڕاپۆرتی کاڵای خاو/مردوو"><span class="kpi-card-icon"><svg viewBox="0 0 24 24"><path d="M21 8 12 3 3 8l9 5 9-5Z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg></span><span class="kpi-number" id="kpiDeadStock">-</span><span class="kpi-label">کاڵای خاو/مردوو</span></div>
+        <!-- نوێ: کارتی KPI‌ی «مامەڵەی ئەمڕۆ» — کۆی گشتی وەسڵی هاتوو+ڕۆشتووی ئەمڕۆ، تاکو
+             بەڕێوەبەر بەبێ چوونە شاشەی مێژوو، ڕاستەوخۆ بزانێت ئەمڕۆ چەند مامەڵە کراوە. -->
+        <div class="kpi-card kpi-today kpi-clickable" onclick="openScreen('screenHistory')" title="کرتە بکە بۆ چوونە شاشەی مێژووی وەسڵەکان"><span class="kpi-card-icon"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 21v-5h5"/></svg></span><span class="kpi-number" id="kpiTodayVouchers">-</span><span class="kpi-label">مامەڵەی ئەمڕۆ (هاتوو+ڕۆشتوو)</span></div>
+    </div>
+
 
     <!-- نوێ: بەشی «خێراکاری» — دوگمەی خێرای زۆر بەکارهاتوو (وەسڵی هاتوو/ڕۆشتوو) و
          خانەیەکی گەڕانی خێرای کاڵا، بۆ ئەوەی کارمەند پێویست نەکات هەمیشە بگەڕێت بۆ
@@ -1101,11 +1147,14 @@
                     <table class="voucher-table">
                         <thead>
                             <tr>
-                                <th style="width: 35%;">گەڕان و هەڵبژاردنی کاڵا (بە ناونیشان یان کۆد)</th>
-                                <th style="width: 20%;">یەکە (بنەڕەتی/دووەم/سێیەم)</th>
-                                <th style="width: 15%;">بڕی هاتوو</th>
-                                <th style="width: 15%;">نرخی تاک (Cost)</th>
-                                <th style="width: 15%;">کۆی گشتی</th>
+                                <th style="width: 27%;">گەڕان و هەڵبژاردنی کاڵا (بە ناونیشان یان کۆد)</th>
+                                <!-- نوێ: ستوونی ڕوونکردنەوە/تێبینی تایبەت بەم ڕیزە (بۆ نموونە: "بۆ کارگەی
+                                     ئه‌ستوونه‌کان"، "بەشێک زیانی هاتووە")، لەتەنیشت هەڵبژاردنی کاڵا. -->
+                                <th style="width: 16%;">ڕوونکردنەوە</th>
+                                <th style="width: 17%;">یەکە (بنەڕەتی/دووەم/سێیەم)</th>
+                                <th style="width: 13%;">بڕی هاتوو</th>
+                                <th style="width: 13%;">نرخی تاک (Cost)</th>
+                                <th style="width: 14%;">کۆی گشتی</th>
                                 <th style="width: 5%;" class="no-print">کردار</th>
                             </tr>
                         </thead>
@@ -1224,24 +1273,26 @@
                     <table class="voucher-table">
                         <thead>
                             <tr>
-                                <th style="width: 30%;">کاڵا هەڵبژێرە (گەڕانی خێرا کۆد/ناو)</th>
-                                <th style="width: 12%;">باڵانسی ئێستا</th>
-                                <th style="width: 12%;">یەکە</th>
-                                <th style="width: 12%;">بڕی ڕۆشتوو</th>
+                                <th style="width: 24%;">کاڵا هەڵبژێرە (گەڕانی خێرا کۆد/ناو)</th>
+                                <!-- نوێ: ستوونی ڕوونکردنەوە/تێبینی تایبەت بەم ڕیزە، لەتەنیشت هەڵبژاردنی کاڵا. -->
+                                <th style="width: 14%;">ڕوونکردنەوە</th>
+                                <th style="width: 10%;">باڵانسی ئێستا</th>
+                                <th style="width: 10%;">یەکە</th>
+                                <th style="width: 10%;">بڕی ڕۆشتوو</th>
                                 <!-- چاککردنی هەڵەیەکی ئاسایشی/بازرگانی (یاسای ئەمینی مەخزەن): پێشتر ئەم
                                      ستوونە (تێچووی ڕاستەقینەی کڕین) لەسەر کاغەزی چاپکراویش دەردەکەوت،
                                      کە زۆرجار بۆ دان بەدەستی شۆفێر/وەرگری دەرەکی بەکاردێت. ئەمە بەڵگەیەکی
                                      ناسکی داراییە کە نابێت لەگەڵ لایەنی دەرەکی هاوبەش بکرێت (سنووری قازانج
                                      ئاشکرا دەکات). ئێستا وەک ستوونی "کردار"، no-print‌ە — لای وێبگەڕ بۆ
                                      ستافی ناوخۆیی دیارە، بەڵام لە کاغەزی چاپکراودا نادیارە. -->
-                                <th style="width: 9%;" class="no-print">تێچووی تاک</th>
+                                <th style="width: 8%;" class="no-print">تێچووی تاک</th>
                                 <!-- خاڵی ٥ (بەرپرسی کۆگا): ستوونی نوێ — کاتێک کاڵا "دەفرۆشرێت" (بۆ نموونە
                                      بۆ کۆمپانیایەکی دەرەکی)، ئارەزوومەندانە دەتوانرێت نرخی فرۆشتن بنووسرێت،
                                      تاکو قازانج/زیان بەراورد بە تێچوو بژمێردرێت. ئەگەر بەتاڵ بمێنێتەوە
                                      (وەک بۆ پڕۆژە/کەس کە کاڵا تیایدا بەکاردێت نەک دەفرۆشرێت)، هیچ
                                      کاریگەرییەک لەسەر هیچ حیسابێکی تر نییە. -->
-                                <th style="width: 9%;">نرخی فرۆشتن (ئارەزوومەندانە)</th>
-                                <th style="width: 9%;">کۆی گشتی</th>
+                                <th style="width: 8%;">نرخی فرۆشتن (ئارەزوومەندانە)</th>
+                                <th style="width: 8%;">کۆی گشتی</th>
                                 <th style="width: 5%;" class="no-print">کردار</th>
                             </tr>
                         </thead>
@@ -1339,8 +1390,10 @@
                     <table class="voucher-table">
                         <thead>
                             <tr>
-                                <th style="width: 30%;">کاڵا (کۆد/ناو)</th>
+                                <th style="width: 26%;">کاڵا (کۆد/ناو)</th>
                                 <th>ناوی کاڵا</th>
+                                <!-- نوێ: ستوونی ڕوونکردنەوە/تێبینی تایبەت بەم ڕیزە، ڕاستەوخۆ لەتەنیشت ناوی کاڵا. -->
+                                <th>ڕوونکردنەوە</th>
                                 <th>یەکە</th>
                                 <th>بڕی گەڕاوە</th>
                                 <th>دۆخ</th>
@@ -1930,7 +1983,7 @@
                         <h3 id="modalTitle">وردەکاری</h3>
                         <div id="modalMeta"></div>
                         <table>
-                            <thead><tr><th>کۆد / ناو</th><th>بڕ</th><th>نرخ</th><th>کۆ</th></tr></thead>
+                            <thead><tr><th>کۆد / ناو</th><th>ڕوونکردنەوە</th><th>بڕ</th><th>نرخ</th><th>کۆ</th></tr></thead>
                             <tbody id="modalItemsTable"></tbody>
                         </table>
                         <div id="modalAttachments" class="no-print" style="margin-top:10px;"></div>
@@ -6912,6 +6965,9 @@ var qrcode = function() {
                     <select class="row-in-select" onchange="updateInRowDetails(${rowIdx})"><option value="">-- هەڵبژاردن --</option></select>
                 </div>
             </td>
+            <!-- نوێ: خانەی ڕوونکردنەوە/تێبینی تایبەت بەم ڕیزە، ئارەزوومەندانەیە (هیچ کاریگەرییەکی
+                 نییە لەسەر کۆگا/باڵانس/نرخ، تەنها دەقی زانیاریی بۆ ڕوونکردنەوە). -->
+            <td><input type="text" class="row-in-note" placeholder="ڕوونکردنەوە (ئارەزوومەندانە)..." style="font-size:12px;"></td>
             <td><select class="row-uom-select" onchange="handleInwardUomChange(${rowIdx})"></select></td>
             <td><input type="number" class="row-qty" min="0" value="0" step="any" oninput="calcInwardRow(${rowIdx})"></td>
             <td><input type="number" class="row-price" min="0" value="0" step="any" oninput="calcInwardRow(${rowIdx})"></td>
@@ -6933,6 +6989,8 @@ var qrcode = function() {
                     <select class="row-out-select" onchange="updateOutRowDetails(${rowIdx})"><option value="">-- هەڵبژاردن --</option></select>
                 </div>
             </td>
+            <!-- نوێ: خانەی ڕوونکردنەوە/تێبینی تایبەت بەم ڕیزە، ئارەزوومەندانەیە. -->
+            <td><input type="text" class="row-out-note" placeholder="ڕوونکردنەوە (ئارەزوومەندانە)..." style="font-size:12px;"></td>
             <td><input type="text" class="row-out-available-stock" readonly value="0" style="background:#eef; font-weight:bold; text-align:center;"></td>
             <td><select class="row-out-uom-select" onchange="handleOutwardUomChange(${rowIdx})"></select></td>
             <td><input type="number" class="row-out-qty" min="0" value="0" step="any" oninput="calcOutwardRow(${rowIdx})"></td>
@@ -6981,6 +7039,8 @@ var qrcode = function() {
                 </div>
             </td>
             <td><input type="text" class="row-ret-name" readonly></td>
+            <!-- نوێ: خانەی ڕوونکردنەوە/تێبینی تایبەت بەم ڕیزە، ئارەزوومەندانەیە، ڕاستەوخۆ لەتەنیشت ناوی کاڵا. -->
+            <td><input type="text" class="row-ret-note" placeholder="ڕوونکردنەوە (ئارەزوومەندانە)..." style="font-size:12px;"></td>
             <td><select class="row-ret-uom-select" onchange="handleReturnUomChange(${rowIdx})"></select></td>
             <td><input type="number" class="row-ret-qty" value="0" step="any" oninput="calcReturnRow(${rowIdx})"></td>
             <td><select class="row-ret-cond" onchange="handleReturnConditionChange(${rowIdx})"><option value="NEW">نوێ</option><option value="USED">بەکارهاتوو</option><option value="DAMAGED">🛠️ زیانبار/لەناوچوو</option></select></td>
@@ -7975,7 +8035,7 @@ var qrcode = function() {
                 }
             }
 
-            voucherItems.push({ code: code, name: item.name, qty: qty, price: price, total: qty*price, curr: curr, factor: factor, uomType: uomSel.value });
+            voucherItems.push({ code: code, name: item.name, qty: qty, price: price, total: qty*price, curr: curr, factor: factor, uomType: uomSel.value, note: (rows[i].querySelector('.row-in-note') ? rows[i].querySelector('.row-in-note').value.trim() : '') });
         }
 
         if(voucherItems.length === 0) { alert('تکایە لانی کەم کاڵایەک زیاد بکە'); return; }
@@ -8311,7 +8371,7 @@ var qrcode = function() {
             let salePriceInput = salePriceRawEl && salePriceRawEl.value !== '' ? parseFloat(salePriceRawEl.value) : null;
             let salePrice = (salePriceInput !== null && salePriceInput > 0) ? salePriceInput : null;
             let profit = salePrice !== null ? roundCurrency((salePrice - effectivePrice) * qty, curr) : null;
-            voucherItems.push({ code: code, name: item.name, qty: qty, price: effectivePrice, total: qty*effectivePrice, curr: curr, factor: factor, uomType: uomSel.value, balanceBefore: availableStock, salePrice: salePrice, profit: profit });
+            voucherItems.push({ code: code, name: item.name, qty: qty, price: effectivePrice, total: qty*effectivePrice, curr: curr, factor: factor, uomType: uomSel.value, balanceBefore: availableStock, salePrice: salePrice, profit: profit, note: (rows[i].querySelector('.row-out-note') ? rows[i].querySelector('.row-out-note').value.trim() : '') });
         }
 
         if(voucherItems.length === 0) { alert('هیچ ڕیزێکی دروست پڕنەکراوەتەوە'); return; }
@@ -8810,6 +8870,7 @@ var qrcode = function() {
             let condition = condSel ? condSel.value : 'NEW';
 
             voucherItems.push({ code, name: item.name, qty, price: priceInput/factor, total: qty*(priceInput/factor), curr: curr, factor: factor, condition: condition, uomType: uomSel.value,
+                note: (rows[i].querySelector('.row-ret-note') ? rows[i].querySelector('.row-ret-note').value.trim() : ''),
                 // نوێ: تەنها بۆ TO_SUPPLIER پڕدەبێتەوە — بەهای WAC ی کاتی گەڕانەوە و کۆی
                 // جیاوازی نێوان ئەو بەهایە و نرخی ڕاستەقینەی گەڕانەوە (قازانج > 0 / زیان < 0).
                 bookValueWac: (type === "TO_SUPPLIER") ? bookValueWac : 0,
@@ -9192,6 +9253,9 @@ var qrcode = function() {
                 row.querySelector('.row-uom-select').setAttribute('data-prev-factor', item.factor || 1);
                 row.querySelector('.row-qty').value = item.qty / (item.factor || 1);
                 row.querySelector('.row-price').value = item.price * (item.factor || 1);
+                // نوێ: گەڕاندنەوەی ڕوونکردنەوەی هەڵگیراوی ئەم ڕیزە (ئەگەر هەبووبێت)
+                let inNoteEl = row.querySelector('.row-in-note');
+                if(inNoteEl) inNoteEl.value = item.note || '';
                 calcInwardRow(idx);
             });
         }
@@ -9232,6 +9296,9 @@ var qrcode = function() {
                 row.querySelector('.row-out-uom-select').setAttribute('data-prev-factor', item.factor || 1);
                 row.querySelector('.row-out-qty').value = item.qty / (item.factor || 1);
                 row.querySelector('.row-out-price').value = item.price * (item.factor || 1);
+                // نوێ: گەڕاندنەوەی ڕوونکردنەوەی هەڵگیراوی ئەم ڕیزە (ئەگەر هەبووبێت)
+                let outNoteEl = row.querySelector('.row-out-note');
+                if(outNoteEl) outNoteEl.value = item.note || '';
                 calcOutwardRow(idx, true); // true = skipFifoRecalc، بۆ پاراستنی نرخی مێژووی
                 // چاککردنی هەڵە: بەکارهێنانی بڕی هەڵگیراوی "باڵانسی بەردەست" ی ئەو کاتەی وەسڵ
                 // پاشکەوتکرا، لە جیاتی زانا نەبوونی (بەهای سفری سەرەتایی)
@@ -9302,6 +9369,9 @@ var qrcode = function() {
                 // پێویستە لە کاتی دووبارە کردنەوەی وەسڵیش ئەم هەڵبژاردنە بگەڕێندرێتەوە.
                 let condSel = row.querySelector('.row-ret-cond');
                 if(condSel && item.condition) condSel.value = item.condition;
+                // نوێ: گەڕاندنەوەی ڕوونکردنەوەی هەڵگیراوی ئەم ڕیزە (ئەگەر هەبووبێت)
+                let retNoteEl = row.querySelector('.row-ret-note');
+                if(retNoteEl) retNoteEl.value = item.note || '';
                 calcReturnRow(idx);
             });
         }
@@ -9747,6 +9817,18 @@ var qrcode = function() {
             if(dateInputEl && dateInputEl.value) {
                 let allowed = await checkDayLockOrRequest(info[0], dateInputEl.value.replace('T', ' '));
                 if(!allowed) return;
+                // چاککردنی هەڵە (قوفڵ خۆی-بەخۆی دوای ماوەیەک دەکرێتەوە): پێشتر تەنها
+                // unlockForm() بانگدەکرا کە تەنها خانەکانی ناو خودی فۆرمەکە دەکاتەوە
+                // (enableFormInputs). بەڵام ئەگەر پێشتر ڕۆژێکی تری قوفڵکراو لەم هەمان
+                // شاشەیەدا کرابووەوە، setFormLockedVisual() هەموو شاشەکەی بە تەواوی
+                // قوفڵ کردبوو و بانەرێکی سووری زیادکردبوو — کە unlockForm() دەستی لێ
+                // نەدەدا و ناشاردرایەوە. بۆیە بانەرەکە هەر لەسەرووی فۆرمەکە دەمایەوە
+                // (وەک ئەوەی هێشتا قوفڵە) هەتا پشکنینی خۆکاری ٦٠ چرکەیی
+                // (startPresenceHeartbeat) خۆی دەیبینییەوە و دادەخست. ئێستا ڕاستەوخۆ
+                // لێرەدا setFormLockedVisual() بانگ دەکرێت بۆ سڕینەوەی هەر بانەر/قوفڵێکی
+                // کۆن، بەبێ چاوەڕوانی پشکنینی خولەکانە.
+                let screenElForUnlock = dateInputEl.closest('.app-screen');
+                if(screenElForUnlock) setFormLockedVisual(screenElForUnlock, dateInputEl, false, info[0], dateInputEl.value);
             }
         }
         if(type === 'IN') unlockForm('inwardForm');
@@ -10324,7 +10406,7 @@ var qrcode = function() {
         document.getElementById('modalTitle').textContent = `بەڵگەنامە ژمارە: ${v.voucherNo}`;
         let openingNote = v.isOpening ? ' <span style="color:#e67e22; font-weight:bold;">📂 ئەمە جێگیرکردنی سەنەدی دەستپێکە</span>' : '';
         document.getElementById('modalMeta').innerHTML = `ڕێککەوت: ${v.date} | لایەن: ${v.supplier || v.project || v.requestedBy || v.location || ''}${openingNote}`;
-        tbody.innerHTML = v.items.map(item => `<tr><td>${item.code} - ${escapeHtml(item.name)}</td><td>${item.qty}</td><td>${formatCurrency(item.price, v.curr || item.curr || CURRENCY_CODE)}</td><td>${formatCurrency(item.total, v.curr || item.curr || CURRENCY_CODE)}</td></tr>`).join('');
+        tbody.innerHTML = v.items.map(item => `<tr><td>${item.code} - ${escapeHtml(item.name)}</td><td>${escapeHtml(item.note || item.notes || '')}</td><td>${item.qty}</td><td>${formatCurrency(item.price, v.curr || item.curr || CURRENCY_CODE)}</td><td>${formatCurrency(item.total, v.curr || item.curr || CURRENCY_CODE)}</td></tr>`).join('');
 
         // نوێ: پیشاندانی وێنە هەڵگیراوەکانی ئەم وەسڵە (ئەگەر هەبن) لە مۆدالی بینیندا
         let attBox = document.getElementById('modalAttachments');
@@ -11148,18 +11230,59 @@ var qrcode = function() {
         let todayVouchersCount = inwardVouchers.filter(v => (v.date || '').split(' ')[0] === todayKey).length
             + outwardVouchers.filter(v => (v.date || '').split(' ')[0] === todayKey).length;
 
+        // نوێ: بەرواری دوایین جوڵەی کۆگا — نوێترین بەروار لەناو هەموو جۆرەکانی وەسڵ
+        // (هاتوو/ڕۆشتوو/گەڕانەوە/چاکسازی/داواکاری کڕین)، هەمان بنەمای
+        // renderDashboardRecentActivity بەکاردێت. ئەگەر هیچ وەسڵێک تۆمار نەکرابێت،
+        // "هیچ" پیشان دەدرێت.
+        let allMoveDates = []
+            .concat((inwardVouchers || []).map(v => v.date))
+            .concat((outwardVouchers || []).map(v => v.date))
+            .concat((returnVouchers || []).map(v => v.date))
+            .concat((adjustmentVouchers || []).map(v => v.date))
+            .concat((prVouchers || []).map(v => v.date))
+            .filter(Boolean);
+        let lastMovementLabel = 'هیچ';
+        if(allMoveDates.length > 0) {
+            let latest = allMoveDates.reduce((a, b) => parseStoredDate(b).getTime() > parseStoredDate(a).getTime() ? b : a);
+            lastMovementLabel = String(latest).split(' ')[0];
+        }
+
+        // نوێ: ژمارەی داواکاری کڕینی پەسەندکراو (status2 === 'approved') کە لە ماوەی ٧
+        // ڕۆژی ڕابردوودا (approvedAt) پەسەندکراوە — پەسەندکردنی ڕاستەقینەی ئەدمین.
+        let sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+        let approved7dCount = (prVouchers || []).filter(v => v.status2 === 'approved' && v.approvedAt && parseStoredDate(v.approvedAt).getTime() >= sevenDaysAgo).length;
+
+        // نوێ: ژمارەی کاڵای خاو/مردوو — هەمان بنەمای ژماردنی renderDeadStockReport
+        // بەکاردێت (چالاک، باڵانس > 0، تەمەنی دوایین دەرچوون >= ٩٠ ڕۆژ).
+        let deadStockDay = 24 * 60 * 60 * 1000;
+        let deadStockCount = 0;
+        inventory.forEach(item => {
+            if(item.active === false) return;
+            if(!(item.balance > 0)) return;
+            let refDateStr = item.lastOutwardDate || item.lastMoveDate || null;
+            if(!refDateStr) return;
+            let ageDays = Math.floor((Date.now() - parseStoredDate(refDateStr).getTime()) / deadStockDay);
+            if(ageDays >= 90) deadStockCount++;
+        });
+
         let elTotal = document.getElementById('kpiTotalValue');
         let elLow = document.getElementById('kpiLowStock');
         let elPR = document.getElementById('kpiPendingPR');
         let elItems = document.getElementById('kpiItemCount');
         let elCustody = document.getElementById('kpiCustodyOut');
         let elToday = document.getElementById('kpiTodayVouchers');
+        let elLastMove = document.getElementById('kpiLastMovement');
+        let elApproved7d = document.getElementById('kpiApproved7d');
+        let elDeadStock = document.getElementById('kpiDeadStock');
         if(elTotal) elTotal.textContent = formatCurrency(totalValue, CURRENCY_CODE);
         if(elLow) elLow.textContent = lowStockCount;
         if(elPR) elPR.textContent = pendingPR;
         if(elItems) elItems.textContent = inventory.length;
         if(elCustody) elCustody.textContent = custodyOutCount;
         if(elToday) elToday.textContent = todayVouchersCount;
+        if(elLastMove) elLastMove.textContent = lastMovementLabel;
+        if(elApproved7d) elApproved7d.textContent = approved7dCount;
+        if(elDeadStock) elDeadStock.textContent = deadStockCount;
 
         // نوێ (خاڵی ٢ی داواکراو): نوێکردنەوەی نیشانەی بچووکی سوور (Badge) لەسەر کاشیی
         // «داواکاری کڕین» بە هەمان ژمارەی چاوەڕوان — تەنها کاتێک زیاترە لە سفر دەردەکەوێت.
