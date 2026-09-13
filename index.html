@@ -1794,6 +1794,11 @@
                     <div>
                         <label>زیادکردنی شوێنی نوێ بە دەست:</label>
                         <input type="text" id="newManualLocationInput" placeholder="ناونیشانی سایت یان شوێن">
+                        <!-- نوێ: هەڵبژاردنی شوێنی باوک (ئارەزوومەندانە) — بۆ دروستکردنی دارستانی
+                             شوێنەکان، بۆ نموونە "پارتیشن" لەژێر "ستراکچەر" لەژێر "تاوەری C". -->
+                        <select id="newManualLocationParentSelect" style="width:auto;">
+                            <option value="">-- (ڕەگ/سەرەکی، بێ باوک) --</option>
+                        </select>
                         <button type="button" onclick="addNewManualLocation()">➕ زیادکردن</button>
                     </div>
                     <!-- پێشنیاری دیزاین: دوگمەی سڕینەوە (کردارێکی وردتر) لە دوگمەی زیادکردن جیاکراوەتەوە
@@ -1824,10 +1829,22 @@
                         <tbody id="projectCategorySummaryTable"></tbody>
                     </table>
 
+                    <!-- نوێ: ئەم خشتەیە تەنها کاتێک دەردەکەوێت کە شوێنی هەڵبژێردراو یەک یان
+                         چەند ژێر-شوێنی هەبێت (وەک "پارتیشن"/"ستراکچەر" لەژێر شوێنێکی سەرەکی).
+                         تێچووی هەر ژێر-شوێنێک بە جیایی پیشان دەدات، لەگەڵ کۆی گشتی لای سەرەوە
+                         کە هەمووی پێکەوە کۆدەکاتەوە. -->
+                    <div id="projectSubLocationSummaryWrap" style="display:none;">
+                        <h4 style="color:#7f8c8d; margin-top:20px;">🌳 کورتەی بەپێی ژێر-شوێن</h4>
+                        <table>
+                            <thead><tr><th>شوێن</th><th>کۆی بەها</th></tr></thead>
+                            <tbody id="projectSubLocationSummaryTable"></tbody>
+                        </table>
+                    </div>
+
                     <h4 style="color:#7f8c8d; margin-top:20px;">📜 وردەکاری هەموو مامەڵەکان</h4>
                     <table>
                         <thead>
-                            <tr><th>ڕێککەوت</th><th>ژمارەی وەسڵ</th><th>کۆد</th><th>ناو</th><th>بڕی ڕۆشتوو</th><th>نرخ</th><th>کۆ</th></tr>
+                            <tr><th>ڕێککەوت</th><th>ژمارەی وەسڵ</th><th>شوێن</th><th>کۆد</th><th>ناو</th><th>بڕی ڕۆشتوو</th><th>نرخ</th><th>کۆ</th></tr>
                         </thead>
                         <tbody id="projectResultTable"></tbody>
                     </table>
@@ -4871,7 +4888,16 @@ var qrcode = function() {
     // گروپە سەرەکییەکان داخراون و تەنها کاتێک کرتەیان لێبکرێت خۆیان دەکەنەوە، بۆ ئەوەی
     // لیستەکە کورت و ئاسان بێت لەبەرچاو کاتێک ژمارەیەکی زۆری ژێرگروپ هەیە.
     let expandedCategoryIds = new Set();
-    let projectLocations = ["تاوەری A", "پڕۆژەی بیناسازی"];
+    // نوێ: شوێن/پڕۆژەکان ئێستا بە شێوەی دار (Hierarchy/Tree) هەڵدەگیرێن، بە هەمان شێوازی
+    // customCategories لە سەرەوە: هەر شوێنێک ئۆبجێکتێکە { name, parentId }. parentId ناوی
+    // شوێنی باوکە (یان null ئەگەر ڕەگ/سەرەکی بێت). "name" وەک id بەکاردێت (وەک پێشتریش،
+    // ناوی شوێن دەبێت لە Supabase‌دا UNIQUE بێت)، بۆیە هیچ گۆڕانکارییەک لە فۆرماتی
+    // v.project ی وەسڵەکان پێویست نییە — کۆنترین وەسڵەکان بەبێ گۆڕان کاردەکەن، تەنها لە
+    // ڕاپۆرتدا کۆکردنەوەی تێچوو ئێستا هەموو ژێر-شوێنەکانیش لەخۆدەگرێت.
+    let projectLocations = [
+        { name: "تاوەری A", parentId: null },
+        { name: "پڕۆژەی بیناسازی", parentId: null }
+    ];
     let suppliers = [];
     // نوێ: لیستی کۆمپانیا دەرەکییەکان — بۆ کاتێک کاڵای کۆگا وەک وەسڵی ڕۆشتوو دەدرێت بە
     // کۆمپانیایەکی تر (نەک پڕۆژە/سایتێکی ناوخۆیی). هەمان شێوازی سادەی لیستی دابینکەرانە.
@@ -5362,6 +5388,92 @@ var qrcode = function() {
         return path.join(' › ');
     }
 
+    // ============ دارستانی شوێن/پڕۆژەکان (Project Location Tree) ============
+    // نوێ: هەمان لۆژیکی دارستانی گروپەکان (getCategoryById/Children/DescendantIds/FullPath)
+    // لێرە دووبارە جێبەجێکراوە بۆ شوێن/پڕۆژەکان، بەڵام بە "name" وەک id (چونکە ناوی شوێن
+    // پێشتریش دەبووایە ناوی جیاواز بێت، بڕوانە registerNewProjectLocation).
+
+    // بۆ کاتێک داتای کۆن (پێش ئەم گۆڕانکارییە) هێشتا بە شێوەی لیستی سادەی ناو (string)
+    // هاتبێت — یان لە فایلی بەکئەپی کۆنەوە هاتبێت، یان (بە کەمتر ڕوودان) لە Supabase‌ی
+    // کۆنەوە پێش زیادکردنی ستوونی parent_name. هەر ئۆبجێکتێک هەڵدەگیرێت، هیچ داتایەک
+    // لەدەست نادرێت.
+    function migrateProjectLocationsDataIfNeeded() {
+        if(!Array.isArray(projectLocations) || projectLocations.length === 0) return;
+        let needsMigration = projectLocations.some(l => typeof l === 'string');
+        if(!needsMigration) return;
+        projectLocations = projectLocations.map(l => (typeof l === 'string') ? { name: l, parentId: null } : l);
+    }
+
+    function getLocationByName(name) {
+        if(!name) return null;
+        return projectLocations.find(l => normalizeNameForCompare(l.name) === normalizeNameForCompare(name)) || null;
+    }
+
+    function getLocationChildren(parentName) {
+        return projectLocations.filter(l => normalizeNameForCompare(l.parentId || '') === normalizeNameForCompare(parentName || ''));
+    }
+
+    // هەموو ناوی خۆی و هەموو ژێر-شوێنەکانی (بە هەر قوڵییەک) دەگەڕێنێتەوە. بەکاردێت لە
+    // ڕاپۆرتی تێچووی پڕۆژەکاندا، تاکو کاتێک شوێنێکی سەرەکی هەڵدەبژێردرێت (وەک "تاوەری C")،
+    // تێچووی هەموو ژێر-شوێنەکانیشی (وەک "پارتیشن"، "ستراکچەر" و هەرچی لەژێریانە) پێکەوە
+    // کۆبکرێتەوە.
+    function getLocationDescendantNames(name) {
+        let node = getLocationByName(name);
+        let result = [node ? node.name : name];
+        let children = getLocationChildren(name);
+        children.forEach(ch => { result = result.concat(getLocationDescendantNames(ch.name)); });
+        return result;
+    }
+
+    // ناوی تەواو بە شێوەی "باوک › کوڕ › نەوە"
+    function getLocationFullPath(name) {
+        let node = getLocationByName(name);
+        if(!node) return name || '';
+        let path = [node.name];
+        let current = node;
+        let guard = 0;
+        while(current && current.parentId && guard < 50) {
+            let parent = getLocationByName(current.parentId);
+            if(!parent) break;
+            path.unshift(parent.name);
+            current = parent;
+            guard++;
+        }
+        return path.join(' › ');
+    }
+
+    // قوڵی شوێنێک لەناو دارەکەدا (٠ = ڕەگ). بەکاردێت بۆ چاککردنی هەڵبژاردنەکان بە
+    // چۆچکردنەوە (indentation) بۆ نیشاندانی دار لە دروپداونەکاندا.
+    function getLocationDepth(loc) {
+        let depth = 0;
+        let current = loc;
+        let guard = 0;
+        while(current && current.parentId && guard < 50) {
+            let parent = getLocationByName(current.parentId);
+            if(!parent) break;
+            current = parent;
+            depth++;
+            guard++;
+        }
+        return depth;
+    }
+
+    // لیستی هەموو شوێنەکان بە ڕیزبەندی دار (باوک دوای ئەوە کوڕەکانی، دوایی نەوەکانی)
+    // لەگەڵ قوڵی هەریەکەیان، بۆ بەکارهێنان لە دروپداون/لیستی ڕێکخستنەکاندا.
+    function getLocationsInTreeOrder() {
+        let result = [];
+        function walk(parentName, depth) {
+            let children = getLocationChildren(parentName).slice()
+                .sort((a, b) => a.name.localeCompare(b.name, 'ku'));
+            children.forEach(ch => {
+                result.push({ loc: ch, depth: depth });
+                walk(ch.name, depth + 1);
+            });
+        }
+        walk(null, 0);
+        return result;
+    }
+
     // کۆی ژمارە و بەهای هەموو ماددە کاڵاکانی گروپێک، لەگەڵ هەموو ژێر-گروپەکانی
     function getCategoryStats(id) {
         let ids = getCategoryDescendantIds(id);
@@ -5398,6 +5510,7 @@ var qrcode = function() {
     }
 
     migrateCategoriesDataIfNeeded();
+    migrateProjectLocationsDataIfNeeded();
     migrateCategorySeqIfNeeded();
     migrateOldItemCodesIfNeeded();
     migrateItemTypeIfNeeded();
@@ -5755,12 +5868,22 @@ var qrcode = function() {
         let select = document.getElementById('filterProjectNameSelect');
         let val = select.value;
         if(!val) { alert('تکایە شوێنێک هەڵبژێرە بۆ سڕینەوە'); return; }
+        // نوێ: ئێستا کە شوێنەکان دەتوانن ژێر-شوێنیشیان هەبێت (دارستان)، سڕینەوەی شوێنێک کە
+        // ژێر-شوێنی هەیە قەدەغەکراوە — ئەگەر نەخێر، ئەو ژێر-شوێنانە "بێ باوک" دەبن بەبێ
+        // ئاگاداری بەکارهێنەر. پێویستە یەکەم جار ژێر-شوێنەکان بسڕدرێنەوە یان شوێنی باوکیان بگۆڕدرێت.
+        let children = getLocationChildren(val);
+        if(children.length > 0) {
+            alert(`❌ ناتوانرێت ئەم شوێنە بسڕدرێتەوە، چونکە (${children.length}) ژێر-شوێنی هەیە:\n` +
+                children.map(c => '- ' + c.name).join('\n') +
+                '\nسەرەتا ئەوانە بسڕەوە یان شوێنی باوکیان بگۆڕە.');
+            return;
+        }
         let usedCount = outwardVouchers.filter(v => v.project === val).length;
         let msg = usedCount > 0
             ? `⚠️ ئەم شوێنە بۆ (${usedCount}) وەسڵی ڕۆشتوو بەکارهاتووە. ئەگەر بیسڕیتەوە، ئەو وەسڵانە لە ڕاپۆرتی پڕۆژەکاندا نەتوانرێت بفلتەرێت (بەڵام خۆی وەسڵەکان لە مێژووی گشتیدا دەمێننەوە). دڵنیایت لە سڕینەوە؟`
             : `ئایا دڵنیایت لە سڕینەوەی شوێنی [${val}]؟`;
         if(confirm(msg)) {
-            projectLocations = projectLocations.filter(l => l !== val);
+            projectLocations = projectLocations.filter(l => normalizeNameForCompare(l.name) !== normalizeNameForCompare(val));
             // چاککردن: سڕینەوەی ڕاستەوخۆ و تایبەت (بڕوانە تێبینی syncSimpleList()).
             sb.from('project_locations').delete().eq('name', val).then(({error}) => { if(error) console.error('delete location failed', error); });
             syncProjectLocationsToSupabase();
@@ -6225,13 +6348,18 @@ var qrcode = function() {
         }
     }
 
-    function registerNewProjectLocation(loc) {
+    // نوێ: پارامیتەری دووەم (parentName) زیادکرا — ئەگەر شوێنی باوکێک هەڵبژێردرابێت، ئەم
+    // شوێنە نوێیە دەخرێتە ژێر ئەو باوکەوە لەناو دارستانی شوێنەکان (بڕوانە تێبینی سەرەوەی
+    // projectLocations). ئەگەر نەدرابێت (یان undefined بێت)، وەک پێشتر شوێنێکی ڕەگ/سەرەکی دەبێت
+    // — بۆیە هەموو بانگکردنە کۆنەکانی ئەم فەنکشنە (بە یەک پارامیتەر) هەر بە هەمان ڕەفتاری
+    // پێشووی خۆیان دەمێننەوە.
+    function registerNewProjectLocation(loc, parentName) {
         // چاککردنی هەڵە: پێشتر پشکنینی دووبارە تەنها بەراوردی وشەیی ڕاستەقینەی دەکرد
         // (`.includes(loc)`)، بۆیە دەکرا "پرۆژەی نوێ" و "پڕۆژەی نوێ" (پیتی هاوشێوەی
         // عەرەبی/کوردی) هەردووکیان وەک دوو شوێنی جیاواز زیاد بکرێن، کە مێژووی هەمان پڕۆژە
         // بۆ دوو ناوی جیاواز دابەش دەکات. ئێستا بەراوردی نەرمکراو بەکاردێت.
-        if(loc && !projectLocations.some(p => normalizeNameForCompare(p) === normalizeNameForCompare(loc))) {
-            projectLocations.push(loc);
+        if(loc && !projectLocations.some(p => normalizeNameForCompare(p.name) === normalizeNameForCompare(loc))) {
+            projectLocations.push({ name: loc, parentId: parentName || null });
             syncProjectLocationsToSupabase();
             populateProjectLocationDropdowns();
         }
@@ -6239,31 +6367,51 @@ var qrcode = function() {
 
     function addNewManualLocation() {
         let loc = document.getElementById('newManualLocationInput').value.trim();
+        // نوێ: دروپداونی هەڵبژاردنی شوێنی باوک (بۆ دروستکردنی شوێنێکی ژێر شوێنێکی تر، وەک
+        // "پارتیشن" لەژێر "ستراکچەر"، یان "ستراکچەر" لەژێر "تاوەری C"). ئەگەر بەتاڵ بمێنێتەوە
+        // یان ئەم خانەیە لە پەڕەکەدا نەبێت، شوێنەکە وەک ڕەگ/سەرەکی زیاد دەکرێت — وەک پێشتر.
+        let parentSelect = document.getElementById('newManualLocationParentSelect');
+        let parentName = parentSelect ? (parentSelect.value || null) : null;
         if(loc) {
-            registerNewProjectLocation(loc);
+            registerNewProjectLocation(loc, parentName);
             document.getElementById('newManualLocationInput').value = "";
+            if(parentSelect) parentSelect.value = "";
             alert('شوێنی نوێ زیادکرا');
         }
     }
 
     // چاککردنی هەڵە: پێشتر لە هەر نوێکردنەوەیەکدا ئەم دروپداونە هەڵبژاردنی پێشووی خۆیان لەدەست دەدا
-    // ئێستا ئەگەر ئەو شوێنە هێشتا لە لیستەکەدا بێت، هەڵبژاردنەکە دەپارێزرێت
+    // ئێستا ئەگەر ئەو شوێنە هێشتا لە لیستەکەدا بێت، هەڵبژاردنەکە دەپارێزرێت.
+    // نوێ: ئێستا هەموو دروپداون/datalist‌ەکان بەپێی ڕیزبەندی دار (باوک، دوایی کوڕەکانی) پڕ
+    // دەکرێنەوە، لەگەڵ چۆچکردنەوەی (indent) بۆ نیشاندانی قوڵی هەریەکەیان — بەڵام "value"‌ی
+    // هەر <option> هەر ناوی سادەی شوێنەکەیە وەک پێشتر (بێ گۆڕان لە فۆرماتی وەسڵەکان).
     function populateProjectLocationDropdowns() {
         let select = document.getElementById('filterProjectNameSelect');
         let outProjSelect = document.getElementById('outProject');
+        let parentSelect = document.getElementById('newManualLocationParentSelect');
+        let orderedLocs = getLocationsInTreeOrder();
         // چاککردنی ئاسایش (XSS): پێشتر ناوی شوێن/پڕۆژە بەبێ escapeHtml ڕاستەوخۆ دەخرایە ناو
         // innerHTML، کە ئەگەر ناوێک نیشانەی HTML/JS تێدابوایە (بۆ نموونە لە ڕێگەی
         // addNewManualLocation) دەیتوانی کۆدی HTML/سکریپت جێبەجێ بکات. ئێستا escapeHtml بەکاردێت.
-        let locOptionsHtml = projectLocations.map(loc => `<option value="${escapeHtml(loc)}">${escapeHtml(loc)}</option>`).join('');
+        let indentPrefix = (depth) => depth > 0 ? '\u2003'.repeat(depth) + '↳ ' : '';
+        let locOptionsHtml = orderedLocs.map(({loc, depth}) =>
+            `<option value="${escapeHtml(loc.name)}">${indentPrefix(depth)}${escapeHtml(loc.name)}</option>`).join('');
+        let allNames = projectLocations.map(l => l.name);
         if(select) {
             let cur = select.value;
             select.innerHTML = '<option value="">-- شوێنێک/پڕۆژەیەک هەڵبژێره --</option>' + locOptionsHtml;
-            if(cur && projectLocations.includes(cur)) select.value = cur;
+            if(cur && allNames.includes(cur)) select.value = cur;
         }
         if(outProjSelect) {
             let cur2 = outProjSelect.value;
             outProjSelect.innerHTML = '<option value="">-- هەڵبژاردنی شوێن/پڕۆژە --</option>' + locOptionsHtml;
-            if(cur2 && projectLocations.includes(cur2)) outProjSelect.value = cur2;
+            if(cur2 && allNames.includes(cur2)) outProjSelect.value = cur2;
+        }
+        // نوێ: لیستی هەڵبژاردنی "شوێنی باوک" لای فۆرمی زیادکردنی شوێنی نوێ.
+        if(parentSelect) {
+            let curP = parentSelect.value;
+            parentSelect.innerHTML = '<option value="">-- (ڕەگ/سەرەکی، بێ باوک) --</option>' + locOptionsHtml;
+            if(curP && allNames.includes(curP)) parentSelect.value = curP;
         }
         // چاککردنی هەڵە: خانەی "سایت/پڕۆژە" لە وەسڵی گەڕانەوە (بۆ FROM_SITE) پێشتر بەستراوە بوو
         // بە datalist ی ناوی دابینکەران بەبێ گۆڕان، تەنانەت کاتێک مەبەستی ناوی پڕۆژە بوو. ئێستا
@@ -6271,7 +6419,7 @@ var qrcode = function() {
         let projDatalist = document.getElementById('projectDatalist');
         if(projDatalist) {
             // چاککردنی ئاسایش (XSS): بڕوانە تێبینی سەرەوە لەناو locOptionsHtml.
-            projDatalist.innerHTML = projectLocations.map(loc => `<option value="${escapeHtml(loc)}"></option>`).join('');
+            projDatalist.innerHTML = allNames.map(name => `<option value="${escapeHtml(name)}"></option>`).join('');
         }
         populateCompanyDatalist();
         populatePersonDatalist();
@@ -8757,7 +8905,7 @@ var qrcode = function() {
         // تۆمارکراوی ئێستا نەگونجێت — بەبێ ڕێگری تەواو (چونکە لەوانەیە بەڕاستی
         // پڕۆژەیەکی نوێ بێت)، تەنها بۆ گرتنی هەڵەی تایپ پێش پاشکەوتکردن.
         if(type === 'FROM_SITE' && loc) {
-            let matchesKnownProject = projectLocations.some(p => normalizeNameForCompare(p) === normalizeNameForCompare(loc));
+            let matchesKnownProject = projectLocations.some(p => normalizeNameForCompare(p.name) === normalizeNameForCompare(loc));
             if(!matchesKnownProject) {
                 if(!confirm(`⚠️ ئاگاداری: "${loc}" لەناو لیستی پڕۆژە/شوێنە تۆمارکراوەکاندا نییە.\n\nئایا دڵنیایت ئەمە پڕۆژەیەکی نوێیە (نەک هەڵەی تایپ بۆ ناوێکی پڕۆژەی ئارادا)؟ ئەگەر هەڵەی تایپە، پاشگەز بەرەوە و لە لیستی پێشنیارکراو هەڵیبژێرە.`)) return;
             }
@@ -10656,7 +10804,14 @@ var qrcode = function() {
         tbody.innerHTML = "";
         
         if(!proj) { alert('تکایە سەرەتا شوێنەکە هەڵبژێرە'); return; }
-        
+
+        // نوێ: هەموو دارستانی شوێنەکان — شوێنی هەڵبژێردراو + هەموو ژێر-شوێنەکانی (بە هەر
+        // قوڵییەک، بۆ نموونە "ستراکچەر" و "پارتیشن"ی لەژێر "تاوەری C" و هەرچی لەژێر
+        // "پارتیشن"یشدایە). بەم شێوەیە کاتێک شوێنێکی سەرەکی هەڵدەبژێردرێت، تێچووی هەموو
+        // ژێر-شوێنەکانیشی خۆکار پێکەوە کۆدەکرێنەوە — وەک داواکراو.
+        let matchNames = getLocationDescendantNames(proj).map(n => normalizeNameForCompare(n));
+        let hasSubLocations = matchNames.length > 1;
+
         // تێبینی: totalSum پێشتر لێرە دادەنرا، ئێستا بە totalsByCurr گۆڕدراوە (بڕوانە خوارەوە)
         // بۆ چارەسەرکردنی کێشەی تێکەڵبوونی دراوی جیاواز.
 
@@ -10673,13 +10828,15 @@ var qrcode = function() {
             // بۆشاییەکی زیادە یان گەورە/بچووکی پیت)، ئەو وەسڵە بەبێ ئاگاداری لە ڕاپۆرت دەرناکەوت
             // — تێچووی ڕاستەقینەی پڕۆژە کەمتر دەردەکەوت. ئێستا هەمان normalizeNameForCompare
             // بەکاردێت کە بۆ گەڕانەوەکان لە خوارەوە بەکارهاتووە.
-            if(normalizeNameForCompare(v.project) === normalizeNameForCompare(proj)) {
+            // نوێ: لە جیاتی بەراوردی تەنها یەک ناو، ئێستا بەراورد دەکرێت لەگەڵ ناوی شوێنی
+            // هەڵبژێردراو *و* هەموو ژێر-شوێنەکانی (matchNames) — بۆ کۆکردنەوەی تێچووی دار.
+            if(matchNames.includes(normalizeNameForCompare(v.project))) {
                 let vDate = parseStoredDate(v.date).getTime();
                 if(sDate && vDate < new Date(sDate).getTime()) return;
                 if(eDate && vDate > getEndOfDayTimestamp(eDate)) return;
                 
                 v.items.forEach(it => {
-                    allEntries.push({ date: v.date, sortDate: vDate, voucherNo: v.voucherNo, code: it.code, name: it.name, qty: it.qty, price: it.price, total: it.total, curr: v.curr, isReturn: false });
+                    allEntries.push({ date: v.date, sortDate: vDate, voucherNo: v.voucherNo, code: it.code, name: it.name, qty: it.qty, price: it.price, total: it.total, curr: v.curr, isReturn: false, locationName: v.project });
                 });
             }
         });
@@ -10690,13 +10847,13 @@ var qrcode = function() {
         // بەبێ ئاگاداری لە کۆی تێچووی پڕۆژە دەرناچوو و تێچووی پڕۆژە بە هەڵە زیاتر دەردەکەوت.
         // ئێستا هەمان normalizeNameForCompare بەکاردێت کە بۆ پشکنینی سنووری گەڕانەوە بەکارهات.
         returnVouchers.forEach(v => {
-            if(v.type === 'FROM_SITE' && normalizeNameForCompare(v.location) === normalizeNameForCompare(proj)) {
+            if(v.type === 'FROM_SITE' && matchNames.includes(normalizeNameForCompare(v.location))) {
                 let vDate = parseStoredDate(v.date).getTime();
                 if(sDate && vDate < new Date(sDate).getTime()) return;
                 if(eDate && vDate > getEndOfDayTimestamp(eDate)) return;
 
                 v.items.forEach(it => {
-                    allEntries.push({ date: v.date, sortDate: vDate, voucherNo: v.voucherNo, code: it.code, name: it.name + ' (گەڕاوەتەوە)', qty: -it.qty, price: it.price, total: -it.total, curr: v.curr, isReturn: true });
+                    allEntries.push({ date: v.date, sortDate: vDate, voucherNo: v.voucherNo, code: it.code, name: it.name + ' (گەڕاوەتەوە)', qty: -it.qty, price: it.price, total: -it.total, curr: v.curr, isReturn: true, locationName: v.location });
                 });
             }
         });
@@ -10722,7 +10879,9 @@ var qrcode = function() {
             let rowStyle = e.isReturn ? ' style="color:#27ae60;"' : '';
             // چاککردنی هەڵە: ستوونی "ژمارەی وەسڵ" زیادکرا تاکو هەر ڕیزێک بگەڕێندرێتەوە بۆ
             // سەرچاوەی وەسڵی ڕاستەقینەی خۆی بۆ پشکنین/تایید.
-            return `<tr${rowStyle}><td>${e.date}</td><td>${e.voucherNo}</td><td>${e.code}</td><td>${escapeHtml(e.name)}</td><td>${e.qty}</td><td>${formatCurrency(e.price, e.curr || CURRENCY_CODE)}</td><td>${formatCurrency(e.total, e.curr || CURRENCY_CODE)}</td></tr>`;
+            // نوێ: ستوونی "شوێن" زیادکرا — کاتێک شوێنی سەرەکی هەڵبژێردراوە و ژێر-شوێنی هەیە،
+            // ئەمە ڕوون دەکاتەوە کە هەر ڕیزێک بە دروستی سەبارەت بە کام ژێر-شوێنە.
+            return `<tr${rowStyle}><td>${e.date}</td><td>${e.voucherNo}</td><td>${escapeHtml(e.locationName || '')}</td><td>${e.code}</td><td>${escapeHtml(e.name)}</td><td>${e.qty}</td><td>${formatCurrency(e.price, e.curr || CURRENCY_CODE)}</td><td>${formatCurrency(e.total, e.curr || CURRENCY_CODE)}</td></tr>`;
         });
         tbody.innerHTML = projRowsHtml.join('');
 
@@ -10730,6 +10889,7 @@ var qrcode = function() {
         // بەکارهێنانی Map بۆ کۆکردنەوەی هەموو ڕیزەکانی هاوکۆد/هاوگروپ.
         let itemSummaryMap = new Map(); // code -> { name, qty, totalsByCurr }
         let categorySummaryMap = new Map(); // categoryLabel -> totalsByCurr
+        let subLocationSummaryMap = new Map(); // locationName -> totalsByCurr
         allEntries.forEach(e => {
             let s = itemSummaryMap.get(e.code) || { name: e.name.replace(' (گەڕاوەتەوە)', ''), qty: 0, totalsByCurr: {} };
             s.qty += e.qty;
@@ -10741,6 +10901,11 @@ var qrcode = function() {
             let catTotals = categorySummaryMap.get(catLabel) || {};
             addToCurrTotals(catTotals, e.curr, e.total);
             categorySummaryMap.set(catLabel, catTotals);
+
+            let locLabel = e.locationName || proj;
+            let locTotals = subLocationSummaryMap.get(locLabel) || {};
+            addToCurrTotals(locTotals, e.curr, e.total);
+            subLocationSummaryMap.set(locLabel, locTotals);
         });
 
         let itemSummaryRows = Array.from(itemSummaryMap.entries()).map(([code, s]) =>
@@ -10757,9 +10922,27 @@ var qrcode = function() {
         document.getElementById('projectCategorySummaryTable').innerHTML = categorySummaryRows.join('') ||
             '<tr><td colspan="2" style="text-align:center; color:#7f8c8d;">هیچ داتایەک نییە</td></tr>';
 
-        
+        // نوێ: کورتەی بەپێی ژێر-شوێن — تەنها کاتێک شوێنی هەڵبژێردراو خۆی یەک یان چەند
+        // ژێر-شوێنی هەیە پیشان دەدرێت (ئەگەرنا هیچ واتایەکی زیادی نییە، چونکە هەموو ڕیزەکان
+        // هەر بۆ یەک شوێنن).
+        let subWrap = document.getElementById('projectSubLocationSummaryWrap');
+        if(hasSubLocations) {
+            let subLocRows = Array.from(subLocationSummaryMap.entries())
+                .sort((a, b) => Object.values(b[1]).reduce((s,v)=>s+v,0) - Object.values(a[1]).reduce((s,v)=>s+v,0))
+                .map(([label, totals]) => `<tr><td>${escapeHtml(getLocationFullPath(label))}</td><td>${formatCurrTotals(totals)}</td></tr>`);
+            document.getElementById('projectSubLocationSummaryTable').innerHTML = subLocRows.join('') ||
+                '<tr><td colspan="2" style="text-align:center; color:#7f8c8d;">هیچ داتایەک نییە</td></tr>';
+            subWrap.style.display = 'block';
+        } else if(subWrap) {
+            subWrap.style.display = 'none';
+        }
+
         document.getElementById('projectResultBox').style.display = "block";
-        document.getElementById('projectResultTitle').textContent = `مەسرووفاتی شوێن: ${proj}`;
+        // نوێ: ناونیشانی ڕاپۆرت ئێستا ناوی تەواوی شوێن بەپێی دار پیشان دەدات (وەک "تاوەری C")
+        // و ئاماژە دەکات ئەگەر ژێر-شوێنیشی تێکەڵکراو بێت.
+        document.getElementById('projectResultTitle').textContent = hasSubLocations
+            ? `مەسرووفاتی شوێن: ${getLocationFullPath(proj)} (لەگەڵ هەموو ژێر-شوێنەکانی)`
+            : `مەسرووفاتی شوێن: ${getLocationFullPath(proj)}`;
         document.getElementById('projectTotalCostSumBox').textContent = `کۆی گشتی تێچووەکان: ${formatCurrTotals(totalsByCurr)}`;
     }
 
@@ -11646,6 +11829,9 @@ var qrcode = function() {
                 if(data.erp_nextAdjVoucherNo) nextAdjVoucherNo = parseInt(data.erp_nextAdjVoucherNo);
                 if(data.erp_nextItemCodeId) nextItemCodeId = parseInt(data.erp_nextItemCodeId);
                 if(data.erp_nextCategoryId) nextCategoryId = parseInt(data.erp_nextCategoryId);
+                // ئەگەر فایلی بەکئەپەکە پێش ئەم گۆڕانکارییە هەڵگیرابێت، شوێنەکان هێشتا لیستی
+                // سادەی ناون (string) — بگۆڕدرێن بۆ فۆرماتی دار پێش سنکرۆنکردنەوە بۆ Supabase.
+                migrateProjectLocationsDataIfNeeded();
 
                 if(typeof syncAllCoreDataToSupabase === 'function') {
                     await syncAllCoreDataToSupabase();
@@ -11711,7 +11897,11 @@ var qrcode = function() {
         document.getElementById('settingsSupplierCount').textContent = suppliers.length;
         document.getElementById('settingsSupplierList').innerHTML = suppliers.map(s => `<li>${escapeHtml(s)}</li>`).join('') || '<li style="color:#7f8c8d;">هیچ دابینکەرێک تۆمار نەکراوە</li>';
         document.getElementById('settingsProjectCount').textContent = projectLocations.length;
-        document.getElementById('settingsProjectList').innerHTML = projectLocations.map(p => `<li>${escapeHtml(p)}</li>`).join('') || '<li style="color:#7f8c8d;">هیچ شوێن/پڕۆژەیەک تۆمار نەکراوە</li>';
+        // نوێ: لیستەکە ئێستا بەپێی دار (باوک، دوایی کوڕەکانی بە چۆچکردنەوە) پیشان دەدرێت،
+        // بۆ ئەوەی لە شاشەی ڕێکخستنەکانیشدا پێکهاتەی دارستانی شوێنەکان بەرچاو بکەوێت.
+        document.getElementById('settingsProjectList').innerHTML = getLocationsInTreeOrder()
+            .map(({loc, depth}) => `<li style="margin-right:${depth * 16}px;">${depth > 0 ? '↳ ' : ''}${escapeHtml(loc.name)}</li>`)
+            .join('') || '<li style="color:#7f8c8d;">هیچ شوێن/پڕۆژەیەک تۆمار نەکراوە</li>';
         document.getElementById('settingsCompanyCount').textContent = companies.length;
         document.getElementById('settingsCompanyList').innerHTML = companies.map(c => `<li>${escapeHtml(c)}</li>`).join('') || '<li style="color:#7f8c8d;">هیچ کۆمپانیایەک تۆمار نەکراوە</li>';
         renderPersonsListTable();
@@ -12331,6 +12521,7 @@ var qrcode = function() {
             await loadAllCoreDataFromSupabase();
         }
         migrateCategoriesDataIfNeeded(); // بۆ سەلامەتی، ئەگەر داتای هەڵگیراوە هێشتا وەشانی کۆن بێت
+        migrateProjectLocationsDataIfNeeded();
 
         // چاککردنی ژمارە ١: داتای وەسڵەکان لەسەرنوێ بارکرا، بۆیە index ی کاش
         // کراوی کۆن هیچ سوودی نامێنێت — دەبێت invalidate بکرێت تاکو داهاتوو بە داتای تازە
@@ -13892,7 +14083,22 @@ async function syncSimpleList(table, arr) {
 }
 async function syncSuppliersToSupabase() { await syncSimpleList('suppliers', suppliers); }
 async function syncCompaniesToSupabase() { await syncSimpleList('companies', companies); }
-async function syncProjectLocationsToSupabase() { await syncSimpleList('project_locations', projectLocations); }
+// نوێ: شوێن/پڕۆژەکان ئیتر تەنها لیستی ناو نین (بڕوانە تێبینی سەرەوەی projectLocations)،
+// هەریەکەیان ستوونی parent_name‌یشی هەیە (ناوی شوێنی باوک، یان null ئەگەر ڕەگ بێت). بۆیە
+// وەک syncSimpleList، upsert-only دەکات (هیچ سڕینەوەیەکی بەراوردی تەواو ناکات — هەمان
+// پارێزراوی race-condition لە syncSimpleList) بەڵام parent_name‌یش دەنێرێت. پێویستە ستوونی
+// parent_name (text, nullable) لە خشتەی project_locations‌ی Supabase‌دا هەبێت.
+async function syncProjectLocationsToSupabase() {
+    try {
+        const rows = (projectLocations || []).filter(l => l && l.name);
+        if(rows.length) {
+            const deduped = dedupeByKey(rows, l => l.name);
+            const { error } = await sb.from('project_locations')
+                .upsert(deduped.map(l => ({ name: l.name, parent_name: l.parentId || null })), { onConflict: 'name' });
+            if(error) throw error;
+        }
+    } catch(e) { console.error('sync project_locations failed', e); }
+}
 
 // ---- کەسەکان (ناو + پلە + بەش) ----
 // چاککردنی هەڵەیەکی زۆر گرنگی دواکەوتوو (Race Condition / Data-Loss): هەمان تێبینی سەرەکی
@@ -13996,7 +14202,10 @@ async function loadAllCoreDataFromSupabase() {
     suppliers = _rows(supR).map(r => r.name);
     companies = _rows(comR).map(r => r.name);
     persons = _rows(perR).map(r => ({ name: r.name, grade: r.grade || '', department: r.department || '' }));
-    projectLocations = _rows(locR).map(r => r.name);
+    // نوێ: parent_name وەردەگیرێت بۆ دروستکردنی دارستانی شوێنەکان (بڕوانە تێبینی سەرەوەی
+    // projectLocations). ئەگەر ستوونی parent_name هێشتا لە Supabase‌دا دروست نەکرابێت،
+    // r.parent_name undefined دەبێت و بە سادەیی وەک null هەڵدەگیرێت (هەموو شوێنەکان ڕەگ دەبن).
+    projectLocations = _rows(locR).map(r => ({ name: r.name, parentId: r.parent_name || null }));
     if(catR && catR.data && catR.data.data) customCategories = catR.data.data;
     if(setR && setR.data) {
         systemSettings = {
