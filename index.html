@@ -8253,7 +8253,20 @@ var qrcode = function() {
         if(voucherNo === "IN-VOU-" + nextVoucherNo) {
             try {
                 const { data: freshNo, error: cErr } = await sb.rpc('get_next_counter', { p_key: 'nextVoucherNo' });
-                if(!cErr && freshNo) { nextVoucherNo = freshNo; voucherNo = "IN-VOU-" + nextVoucherNo; }
+                // چاککردنی هەڵەیەکی گەورە: پێشتر لێرەدا nextVoucherNo ڕاستەوخۆ دەکرا بە freshNo
+                // (کە خۆی ژمارەی ئەم وەسڵەیە، نەک ژمارەی داهاتوو). ئەنجام: دوای پاشکەوتکردنی
+                // وەسڵێکی نوێ، nextVoucherNo لای کلایەنت هەر یەکسان دەمایەوە بە ژمارەی هەمان
+                // وەسڵی تازە پاشکەوتکراو. ئەگەر دواتر بەکارهێنەر هەر بەو وەسڵە هەستایە بۆ
+                // دەستکاریکردن (بۆ نموونە کورتترین ڕێگا: بەبێ گۆڕینی هیچ خانەیەک، تەنها
+                // دووبارە پاشکەوتکردنەوە)، ئەم بەراوردە (voucherNo === "IN-VOU-"+nextVoucherNo)
+                // دووبارە true دەردەچوو، جارێکی تر ژمارەیەکی ڕاستەقینەی *نوێ* وەردەگیرا و
+                // voucherNo دەگۆڕدرا — بەبێ ئەوەی هیچ وەسڵێک بە ئەو ژمارە نوێیە هەبووبێت، بۆیە
+                // filter/push لە خوارەوە هیچی نەدەدۆزییەوە و لەجیاتی نوێکردنەوەی وەسڵی کۆن،
+                // وەسڵێکی تەواو نوێی زیادەیی دروست دەکرد. ئێستا nextVoucherNo دەکرێت بە
+                // freshNo+1 (ژمارەی دوای ئەوەی ئێستا بەکارهات)، بۆ ئەوەی هەر لەگەڵ ژمارەی
+                // ڕاستەقینەی داهاتوو بمێنێتەوە — هاوشێوەی ڕەفتاری nextVoucherNo++ ی
+                // پاشەکشەکراوی (fallback) لە خوارەوە.
+                if(!cErr && freshNo) { voucherNo = "IN-VOU-" + freshNo; nextVoucherNo = freshNo + 1; }
             } catch(e) { console.error('atomic counter fetch failed, using local number', e); }
         }
 
@@ -8636,7 +8649,10 @@ var qrcode = function() {
         if(voucherNo === "OUT-VOU-" + nextOutVoucherNo) {
             try {
                 const { data: freshNo, error: cErr } = await sb.rpc('get_next_counter', { p_key: 'nextOutVoucherNo' });
-                if(!cErr && freshNo) { nextOutVoucherNo = freshNo; voucherNo = "OUT-VOU-" + nextOutVoucherNo; }
+                // چاککردنی هەڵە: بڕوانە تێبینی سەرەکی و درێژی لەناو submitInwardVoucher()
+                // (هەمان کێشەی nextVoucherNo=freshNo، کە دەیتوانی دەستکاریکردنی وەسڵێکی
+                // ڕۆشتووی هەبوو بکاتە دروستکردنی وەسڵێکی نوێی زیادەیی).
+                if(!cErr && freshNo) { voucherNo = "OUT-VOU-" + freshNo; nextOutVoucherNo = freshNo + 1; }
             } catch(e) { console.error('atomic counter fetch failed, using local number', e); }
         }
 
@@ -8833,7 +8849,9 @@ var qrcode = function() {
         if(voucherNo === "PR-" + nextPRVoucherNo) {
             try {
                 const { data: freshNo, error: cErr } = await sb.rpc('get_next_counter', { p_key: 'nextPRVoucherNo' });
-                if(!cErr && freshNo) { nextPRVoucherNo = freshNo; voucherNo = "PR-" + nextPRVoucherNo; }
+                // چاککردنی هەڵە: بڕوانە تێبینی سەرەکی و درێژی لەناو submitInwardVoucher()
+                // (هەمان کێشەی nextVoucherNo=freshNo).
+                if(!cErr && freshNo) { voucherNo = "PR-" + freshNo; nextPRVoucherNo = freshNo + 1; }
             } catch(e) { console.error('atomic counter fetch failed, using local number', e); }
         }
         // چاککردنی هەڵە: بڕوانە هەمان تێبینی لەناو submitInwardVoucher() — گواستنەوەی
@@ -9072,7 +9090,9 @@ var qrcode = function() {
         if(voucherNo === "RET-" + nextReturnVoucherNo) {
             try {
                 const { data: freshNo, error: cErr } = await sb.rpc('get_next_counter', { p_key: 'nextReturnVoucherNo' });
-                if(!cErr && freshNo) { nextReturnVoucherNo = freshNo; voucherNo = "RET-" + nextReturnVoucherNo; }
+                // چاککردنی هەڵە: بڕوانە تێبینی سەرەکی و درێژی لەناو submitInwardVoucher()
+                // (هەمان کێشەی nextVoucherNo=freshNo).
+                if(!cErr && freshNo) { voucherNo = "RET-" + freshNo; nextReturnVoucherNo = freshNo + 1; }
             } catch(e) { console.error('atomic counter fetch failed, using local number', e); }
         }
         // چاککردنی هەڵە: بڕوانە هەمان تێبینی لەناو submitInwardVoucher() — گواستنەوەی
@@ -9231,7 +9251,9 @@ var qrcode = function() {
         let adjNo = "ADJ-" + nextAdjVoucherNo;
         try {
             const { data: freshNo, error: cErr } = await sb.rpc('get_next_counter', { p_key: 'nextAdjVoucherNo' });
-            if(!cErr && freshNo) { nextAdjVoucherNo = freshNo; adjNo = "ADJ-" + nextAdjVoucherNo; }
+            // چاککردنی هەڵە: بڕوانە تێبینی سەرەکی و درێژی لەناو submitInwardVoucher()
+            // (هەمان کێشەی nextVoucherNo=freshNo).
+            if(!cErr && freshNo) { adjNo = "ADJ-" + freshNo; nextAdjVoucherNo = freshNo + 1; }
         } catch(e) { console.error('atomic counter fetch failed, using local number', e); }
         adjustmentVouchers.push({ voucherNo: adjNo, date: getLocalDateTimeString(), items: adjItems.map(({_staleSysQty, ...rest}) => rest) });
         // چاککردنی هەڵە (کۆنترۆڵی دارایی): بڕوانە هەمان تێبینی لەناو submitInwardVoucher().
@@ -11200,7 +11222,9 @@ var qrcode = function() {
         if(voucherNo === "IN-VOU-" + nextVoucherNo) {
             try {
                 const { data: freshNo, error: cErr } = await sb.rpc('get_next_counter', { p_key: 'nextVoucherNo' });
-                if(!cErr && freshNo) { nextVoucherNo = freshNo; voucherNo = "IN-VOU-" + nextVoucherNo; }
+                // چاککردنی هەڵە: بڕوانە تێبینی سەرەکی و درێژی لەناو submitInwardVoucher()
+                // (هەمان کێشەی nextVoucherNo=freshNo).
+                if(!cErr && freshNo) { voucherNo = "IN-VOU-" + freshNo; nextVoucherNo = freshNo + 1; }
                 else { nextVoucherNo++; }
             } catch(e) { console.error('atomic counter fetch failed, using local number', e); nextVoucherNo++; }
         }
@@ -12356,7 +12380,9 @@ var qrcode = function() {
         let adjNo = "ADJ-" + nextAdjVoucherNo;
         try {
             const { data: freshNo, error: cErr } = await sb.rpc('get_next_counter', { p_key: 'nextAdjVoucherNo' });
-            if(!cErr && freshNo) { nextAdjVoucherNo = freshNo; adjNo = "ADJ-" + nextAdjVoucherNo; }
+            // چاککردنی هەڵە: بڕوانە تێبینی سەرەکی و درێژی لەناو submitInwardVoucher()
+            // (هەمان کێشەی nextVoucherNo=freshNo).
+            if(!cErr && freshNo) { adjNo = "ADJ-" + freshNo; nextAdjVoucherNo = freshNo + 1; }
         } catch(e) { console.error('atomic counter fetch failed, using local number', e); }
         adjustmentVouchers.push({
             voucherNo: adjNo,
