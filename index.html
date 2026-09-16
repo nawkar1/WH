@@ -1244,7 +1244,10 @@
                         </div>
                         <div id="outProjectWrap">
                             <label>شوێنی مەبەست / پڕۆژە (بە لیست):</label>
-                            <select id="outProject"></select>
+                            <!-- نوێ: onchange زیادکرا بۆ ئەوەی هەر کاتێک شوێنی سەرەکی دەگۆڕدرێت،
+                                 ستوونی "ژێر-شوێن"ی هەموو ڕیزەکان خۆکار بە ژێر-شوێنەکانی ئەم شوێنە
+                                 نوێیە پڕبکرێتەوە (بڕوانە تێبینی سەرەوەی ستوونی ژێر-شوێن لەناو خشتەکە). -->
+                            <select id="outProject" onchange="populateOutwardSubLocationOptions()"></select>
                         </div>
                         <div id="outCompanyWrap" style="display:none;">
                             <label>ناوی کۆمپانیای دەرەکی:</label>
@@ -1273,12 +1276,19 @@
                     <table class="voucher-table">
                         <thead>
                             <tr>
-                                <th style="width: 24%;">کاڵا هەڵبژێرە (گەڕانی خێرا کۆد/ناو)</th>
+                                <th style="width: 22%;">کاڵا هەڵبژێرە (گەڕانی خێرا کۆد/ناو)</th>
                                 <!-- نوێ: ستوونی ڕوونکردنەوە/تێبینی تایبەت بەم ڕیزە، لەتەنیشت هەڵبژاردنی کاڵا. -->
-                                <th style="width: 14%;">ڕوونکردنەوە</th>
-                                <th style="width: 10%;">باڵانسی ئێستا</th>
-                                <th style="width: 10%;">یەکە</th>
-                                <th style="width: 10%;">بڕی ڕۆشتوو</th>
+                                <th style="width: 11%;">ڕوونکردنەوە</th>
+                                <th style="width: 8%;">باڵانسی ئێستا</th>
+                                <th style="width: 8%;">یەکە</th>
+                                <th style="width: 9%;">بڕی ڕۆشتوو</th>
+                                <!-- نوێ: کاتێک لای سەرەوە (شوێنی مەبەست/پڕۆژە) شوێنێکی سەرەکی هەڵبژێردرا کە
+                                     خۆی ژێر-شوێنی هەیە (وەک "ستراکچەر")، ئەم ستوونە خۆکار بە ژێر-شوێنەکانی
+                                     ئەو شوێنە پڕدەبێتەوە (وەک "تاوەری C"/"تاوەری D") تاکو هەر ڕیزێک بتوانرێت
+                                     بۆ ژێر-شوێنێکی جیاواز دابنرێت — پێویست ناکات هەموو وەسڵ بۆ یەک تاوەر بێت.
+                                     ئەگەر شوێنی سەرەوە هیچ ژێر-شوێنێکی نەبوو، ئەم ستوونە بەتاڵ/ناچالاک دەمێنێتەوە
+                                     و کاڵاکە وەک پێشوو بە ناوی گشتی شوێنی سەرەوە دادەنرێت. -->
+                                <th style="width: 10%;">ژێر-شوێن (ئارەزوومەندانە)</th>
                                 <!-- چاککردنی هەڵەیەکی ئاسایشی/بازرگانی (یاسای ئەمینی مەخزەن): پێشتر ئەم
                                      ستوونە (تێچووی ڕاستەقینەی کڕین) لەسەر کاغەزی چاپکراویش دەردەکەوت،
                                      کە زۆرجار بۆ دان بەدەستی شۆفێر/وەرگری دەرەکی بەکاردێت. ئەمە بەڵگەیەکی
@@ -1378,7 +1388,10 @@
                         </div>
                         <div>
                             <label>سایت / دابینکەر:</label>
-                            <input type="text" id="retLocation" required list="projectDatalist" placeholder="ناوی پڕۆژە/سایت">
+                            <!-- نوێ: oninput زیادکرا بۆ ئەوەی (لە حاڵەتی "گەڕانەوە لە سایت") هەر کاتێک ناوی
+                                 شوێن دەنووسرێت/دەگۆڕدرێت، ستوونی "ژێر-شوێن"ی هەموو ڕیزەکان خۆکار بە
+                                 ژێر-شوێنەکانی ئەو شوێنە پڕبکرێتەوە (هەمان بنەمای outProject لای وەسڵی ڕۆشتوو). -->
+                            <input type="text" id="retLocation" required list="projectDatalist" placeholder="ناوی پڕۆژە/سایت" oninput="populateReturnSubLocationOptions()">
                         </div>
                     </div>
                     <!-- پێشنیاری دیزاین: ڕوونکردنەوەی کورت بۆ ئەوەی جۆری گەڕانەوە چی مانایە،
@@ -1396,6 +1409,10 @@
                                 <th>ڕوونکردنەوە</th>
                                 <th>یەکە</th>
                                 <th>بڕی گەڕاوە</th>
+                                <!-- نوێ: تەنها بابەت لای "گەڕانەوە لە سایت" (FROM_SITE) — بۆ ئەوەی دیاری
+                                     بکرێت ئەم کاڵایە لە کام ژێر-شوێنی سایتەکە گەڕاوەتەوە (وەک outProject
+                                     لای وەسڵی ڕۆشتوو، بڕوانە تێبینی سەرەوەی retLocation). -->
+                                <th>ژێر-شوێن (ئارەزوومەندانە)</th>
                                 <th>دۆخ</th>
                                 <th>نرخ</th>
                                 <th>کۆی گشتی</th>
@@ -5650,7 +5667,15 @@ var qrcode = function() {
                 shortfallReport.fallbackPrice = fallbackPrice;
             }
         }
-        return totalValue / qty;
+        // چاککردنی هەڵە (وردبوونی نرخ): پێشتر ئێرە ڕاستەوخۆ `totalValue / qty` دەگەڕایەوە
+        // بەبێ هیچ ڕاوگرتنی ژمارە دوای نوقتە. لەبەر سروشتی هەژماردنی float لە JavaScript،
+        // ئەم دابەشکردنە زۆرجار ژمارەیەکی زۆر درێژ دەردەدا (بۆ نموونە ٢٣٤٥.٦٧٨٩٩٩٩٩٩٩٩٩٩٩٧
+        // لەجیاتی ٢٣٤٥.٦٨)، کە ڕاستەوخۆ لەناو خانەی نرخی وەسڵی ڕۆشتوودا دەردەکەوت (بڕوانە
+        // calcOutwardRow) — هەروەها ئەم نرخە درێژە خۆی، وەک خۆی، لە کاتی پاشکەوتکردندا
+        // (submitOutwardVoucher) هەڵدەگیرا. ئێستا roundCurrency() بەکاردێت (هەمان فەنکشنی
+        // ستاندارد بۆ هەموو نرخەکانی تری سیستم) بۆ ڕاوگرتنی ژمارەی دروستی دوای نوقتە،
+        // بەپێی ڕێکخستنی دراوی سیستم (CURRENCY_CODE).
+        return roundCurrency(totalValue / qty);
     }
 
     // نوێ: وردەکاری بەشکردنی بڕێک بەسەر چەند چینی FIFO دا، بە شێوەی دەقێکی خوێندنەوەبۆ
@@ -6423,6 +6448,73 @@ var qrcode = function() {
         }
         populateCompanyDatalist();
         populatePersonDatalist();
+        // نوێ: ستوونەکانی ژێر-شوێن لای وەسڵی ڕۆشتوو/گەڕانەوە پشت بەم لیستەی سەرەوە دەبەستن،
+        // بۆیە هەر کاتێک دارستانی شوێنەکان نوێ دەکرێتەوە (بۆ نموونە شوێنێکی نوێ زیاد کرا)،
+        // ئەوانیش پێویستە نوێبکرێنەوە.
+        if(typeof populateOutwardSubLocationOptions === 'function') populateOutwardSubLocationOptions();
+        if(typeof populateReturnSubLocationOptions === 'function') populateReturnSubLocationOptions();
+    }
+
+    // ============ ستوونی ژێر-شوێن لای هەر ڕیزی وەسڵی ڕۆشتوو/گەڕانەوە ============
+    // بڕوانە تێبینی سەرەکی لەناو HTML‌ی ستوونی "ژێر-شوێن" لای خشتەکانی وەسڵی ڕۆشتوو/گەڕانەوە.
+
+    // فەنکشنێکی هاوبەش: دروپداونێکی دراوکراو بە ژێر-شوێنەکانی parentName پڕدەکاتەوە. ئەگەر
+    // parentName هیچ ژێر-شوێنێکی نەبوو، دروپداونەکە ناچالاک دەکرێت (چونکە هیچ هەڵبژاردنێکی
+    // واتادار نییە). preserveValue ئەگەر هێشتا لەناو ژێر-شوێنە نوێیەکاندا بوو، دەپارێزرێت.
+    function populateSubLocationSelect(selectEl, parentName) {
+        if(!selectEl) return;
+        // چاککردنی هەڵە: ئەم فەنکشنە پێشتر بەبێ مەرج selectEl.disabled دادەنا (true/false)
+        // تەنها بەپێی بوونی ژێر-شوێن، بەبێ ئەوەی گوێ بدات ئایا خودی فۆرمەکە لەو ساتەدا
+        // قوفڵکراوە (وەسڵێکی کۆن دەبینرێت) یان نا. لەبەر ئەوەی populateProjectLocationDropdowns()
+        // (کە ئەم فەنکشنە بانگی دەکات) هەروەها لەلایەن سیستمی realtime‌ەوە خۆکار بانگ دەکرێت
+        // (بڕوانە تێبینی refreshAppUIAfterDataLoad)، ئەمە دەیتوانی ئەم دروپداونە بە هەڵە
+        // چالاک بکاتەوە تەنانەت لەکاتێکدا هەموو خانەکانی تری فۆرمەکە قوفڵ بن. ئێستا پێش
+        // چالاککردنەوە، دۆخی قوفڵی ڕاستەقینەی ڕیزەکە (لە ڕێگەی ڕیزی qty لای هەمان ڕیز) پشکنین
+        // دەکرێت — ئەگەر ڕیزەکە قوفڵکراوە، ئەم دروپداونەش قوفڵ دەمێنێتەوە.
+        let row = selectEl.closest('tr');
+        let siblingQty = row ? (row.querySelector('.row-out-qty') || row.querySelector('.row-ret-qty')) : null;
+        let rowIsLocked = siblingQty ? siblingQty.disabled : false;
+        let preserveValue = selectEl.value;
+        let children = parentName ? getLocationChildren(parentName) : [];
+        if(children.length === 0) {
+            selectEl.innerHTML = '<option value="">-- (بەپێی شوێنی سەرەوە) --</option>';
+            selectEl.value = '';
+            selectEl.disabled = true;
+            selectEl.title = '';
+            return;
+        }
+        selectEl.disabled = rowIsLocked;
+        selectEl.title = 'ئارەزوومەندانە: ئەگەر هیچ هەڵنەبژێریت، ئەم کاڵایە بە ناوی گشتی [' + parentName + '] دادەنرێت';
+        let optionsHtml = '<option value="">-- (بەپێی شوێنی سەرەوە: ' + escapeHtml(parentName) + ') --</option>' +
+            children.map(c => `<option value="${escapeHtml(c.name)}">${escapeHtml(c.name)}</option>`).join('');
+        selectEl.innerHTML = optionsHtml;
+        if(preserveValue && children.some(c => normalizeNameForCompare(c.name) === normalizeNameForCompare(preserveValue))) {
+            selectEl.value = preserveValue;
+        }
+    }
+
+    // کاتێک شوێنی سەرەوەی وەسڵی ڕۆشتوو (outProject) دەگۆڕدرێت، هەموو ڕیزەکانی ئێستا نوێ دەکرێتەوە.
+    function populateOutwardSubLocationOptions() {
+        let outProjSelect = document.getElementById('outProject');
+        let parentName = outProjSelect ? outProjSelect.value : '';
+        let rows = document.getElementById('outwardItemsRows');
+        if(!rows) return;
+        Array.from(rows.children).forEach(tr => {
+            populateSubLocationSelect(tr.querySelector('.row-out-subloc'), parentName);
+        });
+    }
+
+    // کاتێک شوێنی سەرەوەی گەڕانەوە (retLocation) دەگۆڕدرێت، هەموو ڕیزەکانی ئێستا نوێ دەکرێتەوە.
+    // تەنها لە دۆخی FROM_SITE واتای هەیە، بەڵام هیچ زیانی نییە بۆ TO_SUPPLIER‌یش پڕبکرێتەوە —
+    // ئەو ستوونە بۆ TO_SUPPLIER بە سادەیی بەتاڵ/بەکارنەهاتوو دەمێنێتەوە.
+    function populateReturnSubLocationOptions() {
+        let retLocEl = document.getElementById('retLocation');
+        let parentName = retLocEl ? retLocEl.value.trim() : '';
+        let rows = document.getElementById('returnItemsRows');
+        if(!rows) return;
+        Array.from(rows.children).forEach(tr => {
+            populateSubLocationSelect(tr.querySelector('.row-ret-subloc'), parentName);
+        });
     }
 
     // نوێ: تۆمارکردنی کۆمپانیای دەرەکی نوێ (کاتێک کاڵا وەک وەسڵی ڕۆشتوو دەدرێت بە کۆمپانیایەکی
@@ -6937,10 +7029,21 @@ var qrcode = function() {
     }
 
     function setupFormVoucherNumbers() {
-        document.getElementById('inVoucherNo').value = "IN-VOU-" + nextVoucherNo;
-        document.getElementById('outVoucherNo').value = "OUT-VOU-" + nextOutVoucherNo;
-        document.getElementById('prVoucherNo').value = "PR-" + nextPRVoucherNo;
-        document.getElementById('retVoucherNo').value = "RET-" + nextReturnVoucherNo;
+        // چاککردنی هەڵەیەکی گەورە (بەرپرسی کۆگا): پێشتر ئەم فەنکشنە بەبێ هیچ مەرجێک هەر ٤
+        // فۆرمی ژمارە/بەرواریان دەگۆڕی، تەنانەت ئەگەر ئەو فۆرمە لەو ساتەدا وەسڵێکی هەبووی کۆن
+        // پیشان بدات (کاتێک بەکارهێنەرێک بۆ بینین/دەستکاریکردنی وەسڵێکی کۆن گەڕاوەتەوە، وەک
+        // بریتی لە ⬅️ پێشوو). ئەم فەنکشنە خۆی خۆکار بانگ دەکرێت لەلایەن سیستمی realtime
+        // (بڕوانە refreshAppUIAfterDataLoad) هەر کاتێک هەر گۆڕانکارییەک لە هەر شوێنێکی
+        // سیستمدا ڕوو بدات — تەنانەت لەلایەن بەکارهێنەرێکی تر و بێ هیچ پەیوەندییەک بەو
+        // وەسڵەی تۆ ئێستا سەیری دەکەیت. ئەنجام: بەکارهێنەرێک کە خەریکی سەیرکردنی وەسڵێکی
+        // کۆنی قوفڵکراوە، دوای چەند چرکەیەک بە بێدەنگی دەبینی ژمارە/بەرواری فۆرمەکەی
+        // گۆڕدراوە بۆ نوێترین ژمارە/بەرواری ئێستا (وەک ئەوەی خۆی وەسڵێکی نوێیە)، هەرچەندە
+        // خودی کاڵاکان ناگۆڕدرێن. ئێستا هەر خانەیەک تەنها ئەگەر ئەو فۆرمە بەڕاستی لە دۆخی
+        // "داخڵکردنی وەسڵێکی نوێ"دایە (currentVoucherIndex[type] === -1) نوێ دەکرێتەوە.
+        if(currentVoucherIndex.IN === -1) document.getElementById('inVoucherNo').value = "IN-VOU-" + nextVoucherNo;
+        if(currentVoucherIndex.OUT === -1) document.getElementById('outVoucherNo').value = "OUT-VOU-" + nextOutVoucherNo;
+        if(currentVoucherIndex.PR === -1) document.getElementById('prVoucherNo').value = "PR-" + nextPRVoucherNo;
+        if(currentVoucherIndex.RET === -1) document.getElementById('retVoucherNo').value = "RET-" + nextReturnVoucherNo;
         
         // چاککردنی هەڵەی گەورە: پێشتر بۆ پڕکردنەوەی خانەی کات بە شێوەی خۆکار .toISOString()
         // بەکاردەهات، کە کاتژمێر بە دراوی UTC (کاتی گرینویچ) دەگەڕێنێتەوە نەک کاتی ناوخۆیی
@@ -6948,10 +7051,10 @@ var qrcode = function() {
         // ئێستا دەردەکەوت (بۆ نموونە دەیوت کاتژمێر ١٢ لە کاتێکدا کاتی ڕاستەقینەی ئێستا کاتژمێر
         // ٣ بوو). ئێستا هەمان شێوازی getLocalDateTimeString بەکاردێت کە کاتی ناوخۆیی ڕاست بەکاردەهێنێت.
         let nowLocal = getLocalDateTimeString().replace(' ', 'T');
-        document.getElementById('inDate').value = nowLocal;
-        document.getElementById('outDate').value = nowLocal;
-        document.getElementById('prDate').value = nowLocal;
-        document.getElementById('retDate').value = nowLocal;
+        if(currentVoucherIndex.IN === -1) document.getElementById('inDate').value = nowLocal;
+        if(currentVoucherIndex.OUT === -1) document.getElementById('outDate').value = nowLocal;
+        if(currentVoucherIndex.PR === -1) document.getElementById('prDate').value = nowLocal;
+        if(currentVoucherIndex.RET === -1) document.getElementById('retDate').value = nowLocal;
 
         // چاککردنی هەڵە (قوفڵی ڕۆژ): پێشتر ئەم فەنکشنە بەرواری خانەکانی سەرەوەی بە شێوەی
         // خۆکار (بەبێ ڕووداوی onchange) دادەنا، بۆیە کاتێک فۆرمێکی نوێ دەکرایەوە، دۆخی قوفڵی
@@ -7142,6 +7245,9 @@ var qrcode = function() {
             <td><input type="text" class="row-out-available-stock" readonly value="0" style="background:#eef; font-weight:bold; text-align:center;"></td>
             <td><select class="row-out-uom-select" onchange="handleOutwardUomChange(${rowIdx})"></select></td>
             <td><input type="number" class="row-out-qty" min="0" value="0" step="any" oninput="calcOutwardRow(${rowIdx})"></td>
+            <!-- نوێ: ستوونی ژێر-شوێن — بڕوانە تێبینی سەرەوەی outProject/ستوونی ژێر-شوێن لەناو
+                 HTML‌ی خشتەکە. بەتاڵ دەمێنێتەوە (ناچالاک) تا کاتێک شوێنی سەرەوە پڕدەکرێتەوە. -->
+            <td><select class="row-out-subloc"><option value="">-- (بەپێی شوێنی سەرەوە) --</option></select></td>
             <td class="no-print"><input type="number" class="row-out-price" readonly value="0" step="any"></td>
             <td><input type="number" class="row-out-sale-price" min="0" value="" step="any" placeholder="ئارەزوومەندانە" oninput="calcOutwardRow(${rowIdx})"></td>
             <td><input type="text" class="row-out-total" readonly value="-"></td>
@@ -7149,8 +7255,10 @@ var qrcode = function() {
         `;
         tbody.appendChild(tr);
         populateSelectWithOptions(tr.querySelector('.row-out-select'), "");
+        // نوێ: ڕیزی تازە زیادکراویش پێویستی بە پڕکردنەوەی دروپداونی ژێر-شوێن هەیە
+        // (بەپێی شوێنی سەرەوەی ئێستا)، وەک هەموو ڕیزەکانی تر.
+        populateOutwardSubLocationOptions();
     }
-
     function addPRRow() {
         let tbody = document.getElementById('prItemsRows');
         let rowIdx = tbody.children.length;
@@ -7191,6 +7299,9 @@ var qrcode = function() {
             <td><input type="text" class="row-ret-note" placeholder="ڕوونکردنەوە (ئارەزوومەندانە)..." style="font-size:12px;"></td>
             <td><select class="row-ret-uom-select" onchange="handleReturnUomChange(${rowIdx})"></select></td>
             <td><input type="number" class="row-ret-qty" value="0" step="any" oninput="calcReturnRow(${rowIdx})"></td>
+            <!-- نوێ: ستوونی ژێر-شوێن — تەنها بۆ FROM_SITE واتایەکی هەیە، بڕوانە تێبینی سەرەوەی
+                 retLocation/ستوونی ژێر-شوێن لەناو HTML‌ی خشتەکە. -->
+            <td><select class="row-ret-subloc"><option value="">-- (بەپێی شوێنی سەرەوە) --</option></select></td>
             <td><select class="row-ret-cond" onchange="handleReturnConditionChange(${rowIdx})"><option value="NEW">نوێ</option><option value="USED">بەکارهاتوو</option><option value="DAMAGED">🛠️ زیانبار/لەناوچوو</option></select></td>
             <td><input type="number" class="row-ret-price" value="0" step="any" oninput="calcReturnRow(${rowIdx})"></td>
             <td><input type="text" class="row-ret-total" readonly value="-"></td>
@@ -7198,6 +7309,8 @@ var qrcode = function() {
         `;
         tbody.appendChild(tr);
         populateSelectWithOptions(tr.querySelector('.row-ret-select'), "");
+        // نوێ: بڕوانە تێبینی هاوشێوە لەناو addOutwardRow().
+        populateReturnSubLocationOptions();
     }
 
     // چاککردنی هەڵە گرنگ: پێشتر کاتێک ڕیزێک لە ناوەڕاستی خشتەکە دەسڕدرایەوە، ئیندێکسی
@@ -8250,23 +8363,30 @@ var qrcode = function() {
         // پاشکەوتکردن، ژمارەیەکی ڕاستەقینەی نوێ لە داتابەیسەوە بە شێوەیەکی atomic
         // وەردەگیرێت (فەنکشنی get_next_counter لە سێرڤەرەوە)، تاکو هەرگیز دووبارە نەبێتەوە.
         let voucherNoBeforeRenumber = voucherNo;
-        if(voucherNo === "IN-VOU-" + nextVoucherNo) {
+        // چاککردنی هەڵەیەکی گەورەتر (دووەم هەوڵ، دوای پشکنینی ڕاستەقینەی کۆدی سێرڤەر):
+        // پێشتر ئێرە پشکنینی "ئایا ئەمە وەسڵێکی نوێیە" پشتی بە بەراوردکردنی voucherNo
+        // لەگەڵ nextVoucherNo (ژمارەیەکی کاش کراوی لای کلایەنت) دەبەست. کێشەکە ئەوەیە
+        // nextVoucherNo لە چەندین شوێنەوە دەگۆڕدرێت (ئەم فەنکشنە، saveAndRefresh() کە
+        // دوای هەر پاشکەوتکردنێکی تری سیستم خۆکار دووبارە دەینووسێتەوە بۆ Supabase، و
+        // ڕێکخستنی دەستی لە شاشەی ڕێکخستنەکان)، بۆیە هەرگیز ١٠٠٪ متمانەپێکراو نییە. ئەگەر
+        // بەهەر هۆیەکەوە دوایین وەسڵی پاشکەوتکراو هاوتا بووایە لەگەڵ nextVoucherNo، ئەم
+        // بەراوردە بە هەڵە true دەدایەوە کاتێک دووبارە دەستکاری دەکرا، وا لێدەکرد وەسڵێکی
+        // نوێی زیادەیی (بە هەمان ماددەکان) دروست بکرێت لەجیاتی نوێکردنەوەی وەسڵی کۆن.
+        // ئێستا پشکنین لەسەر داتای ڕاستەقینە دەکرێت: ئایا وەسڵێک بەم ژمارەیە پێشتر لەناو
+        // لیستی هەڵگیراودا هەیە؟ ئەم پشکنینە هەرگیز ناتوانرێت هەڵبخەڵەتێت، چونکە پشتی بە
+        // خودی داتاکان دەبەستێت نەک بە ژمارەیەکی کاش کراو.
+        if(!inwardVouchers.some(v => v.voucherNo === voucherNo)) {
             try {
                 const { data: freshNo, error: cErr } = await sb.rpc('get_next_counter', { p_key: 'nextVoucherNo' });
-                // چاککردنی هەڵەیەکی گەورە: پێشتر لێرەدا nextVoucherNo ڕاستەوخۆ دەکرا بە freshNo
-                // (کە خۆی ژمارەی ئەم وەسڵەیە، نەک ژمارەی داهاتوو). ئەنجام: دوای پاشکەوتکردنی
-                // وەسڵێکی نوێ، nextVoucherNo لای کلایەنت هەر یەکسان دەمایەوە بە ژمارەی هەمان
-                // وەسڵی تازە پاشکەوتکراو. ئەگەر دواتر بەکارهێنەر هەر بەو وەسڵە هەستایە بۆ
-                // دەستکاریکردن (بۆ نموونە کورتترین ڕێگا: بەبێ گۆڕینی هیچ خانەیەک، تەنها
-                // دووبارە پاشکەوتکردنەوە)، ئەم بەراوردە (voucherNo === "IN-VOU-"+nextVoucherNo)
-                // دووبارە true دەردەچوو، جارێکی تر ژمارەیەکی ڕاستەقینەی *نوێ* وەردەگیرا و
-                // voucherNo دەگۆڕدرا — بەبێ ئەوەی هیچ وەسڵێک بە ئەو ژمارە نوێیە هەبووبێت، بۆیە
-                // filter/push لە خوارەوە هیچی نەدەدۆزییەوە و لەجیاتی نوێکردنەوەی وەسڵی کۆن،
-                // وەسڵێکی تەواو نوێی زیادەیی دروست دەکرد. ئێستا nextVoucherNo دەکرێت بە
-                // freshNo+1 (ژمارەی دوای ئەوەی ئێستا بەکارهات)، بۆ ئەوەی هەر لەگەڵ ژمارەی
-                // ڕاستەقینەی داهاتوو بمێنێتەوە — هاوشێوەی ڕەفتاری nextVoucherNo++ ی
-                // پاشەکشەکراوی (fallback) لە خوارەوە.
-                if(!cErr && freshNo) { voucherNo = "IN-VOU-" + freshNo; nextVoucherNo = freshNo + 1; }
+                // چاککردنی هەڵە: فەنکشنی get_next_counter لە سێرڤەرەوە یەکەم جار ژمارەکە
+                // زیاد دەکات پاشان هەمان ژمارەی زیادکراو دەگەڕێنێتەوە (بڕوانە کۆدی
+                // فەنکشنەکە لە Supabase). واتا freshNo خۆی ژمارەی دروستی "دوایین
+                // پاشکەوتکراو"ە و پێویست بە +1 نییە. پێشتر (بە هەڵە) freshNo+1 دادەنرا،
+                // کە وای لێدەکرد هەر جارە دروستکردنێکی وەسڵ، ژمارەیەک بە تەواوی بازبدرێت
+                // کاتێک saveAndRefresh() دواتر ئەم ژمارە هەڵەیەی دووبارە دەنووسییەوە بۆ
+                // Supabase (بۆ نموونە لای Nawkar، ژمارەکان بووبوونە 9002, 9004, 9006...
+                // بەبێ ئەوەی 9001, 9003, 9005 هەرگیز بەکاربهێنرێن).
+                if(!cErr && freshNo) { voucherNo = "IN-VOU-" + freshNo; nextVoucherNo = freshNo; }
             } catch(e) { console.error('atomic counter fetch failed, using local number', e); }
         }
 
@@ -8532,7 +8652,12 @@ var qrcode = function() {
             let salePriceInput = salePriceRawEl && salePriceRawEl.value !== '' ? parseFloat(salePriceRawEl.value) : null;
             let salePrice = (salePriceInput !== null && salePriceInput > 0) ? salePriceInput : null;
             let profit = salePrice !== null ? roundCurrency((salePrice - effectivePrice) * qty, curr) : null;
-            voucherItems.push({ code: code, name: item.name, qty: qty, price: effectivePrice, total: qty*effectivePrice, curr: curr, factor: factor, uomType: uomSel.value, balanceBefore: availableStock, salePrice: salePrice, profit: profit, note: (rows[i].querySelector('.row-out-note') ? rows[i].querySelector('.row-out-note').value.trim() : '') });
+            // نوێ: ژێر-شوێنی ئارەزوومەندانەی ئەم ڕیزە بە تایبەتی (بڕوانە تێبینی سەرەوەی
+            // ستوونی "ژێر-شوێن" لەناو HTML‌ی خشتەکە). ئەگەر بەتاڵ/ناچالاک بوو، location
+            // بەتاڵ دەمێنێتەوە و لە ڕاپۆرتی تێچووی پرۆژەدا بە ناوی گشتی [project] دادەنرێت.
+            let sublocEl = rows[i].querySelector('.row-out-subloc');
+            let itemLocation = (sublocEl && !sublocEl.disabled && sublocEl.value) ? sublocEl.value : '';
+            voucherItems.push({ code: code, name: item.name, qty: qty, price: effectivePrice, total: qty*effectivePrice, curr: curr, factor: factor, uomType: uomSel.value, balanceBefore: availableStock, salePrice: salePrice, profit: profit, location: itemLocation, note: (rows[i].querySelector('.row-out-note') ? rows[i].querySelector('.row-out-note').value.trim() : '') });
         }
 
         if(voucherItems.length === 0) { alert('هیچ ڕیزێکی دروست پڕنەکراوەتەوە'); return; }
@@ -8644,15 +8769,16 @@ var qrcode = function() {
         if(recipientType === 'COMPANY') registerNewCompany(project);
         if(recipientType === 'PERSON') registerNewPerson(project);
 
-        // چاککردنی هەڵە (Race condition): بڕوانە هەمان تێبینی لەناو submitInwardVoucher().
+        // چاککردنی هەڵە (Race condition): بڕوانە هەمان تێبینی درێژی لەناو submitInwardVoucher()
+        // — پشکنین ئێستا لەسەر بوونی ڕاستەقینەی وەسڵ لەناو لیستدا دەکرێت، نەک بەراوردکردن
+        // لەگەڵ nextOutVoucherNo‌ی کاش کراو.
         let voucherNoBeforeRenumber = voucherNo;
-        if(voucherNo === "OUT-VOU-" + nextOutVoucherNo) {
+        if(!outwardVouchers.some(v => v.voucherNo === voucherNo)) {
             try {
                 const { data: freshNo, error: cErr } = await sb.rpc('get_next_counter', { p_key: 'nextOutVoucherNo' });
                 // چاککردنی هەڵە: بڕوانە تێبینی سەرەکی و درێژی لەناو submitInwardVoucher()
-                // (هەمان کێشەی nextVoucherNo=freshNo، کە دەیتوانی دەستکاریکردنی وەسڵێکی
-                // ڕۆشتووی هەبوو بکاتە دروستکردنی وەسڵێکی نوێی زیادەیی).
-                if(!cErr && freshNo) { voucherNo = "OUT-VOU-" + freshNo; nextOutVoucherNo = freshNo + 1; }
+                // (freshNo پێویستی بە +1 نییە، خۆی ژمارەی دروستە).
+                if(!cErr && freshNo) { voucherNo = "OUT-VOU-" + freshNo; nextOutVoucherNo = freshNo; }
             } catch(e) { console.error('atomic counter fetch failed, using local number', e); }
         }
 
@@ -8844,14 +8970,15 @@ var qrcode = function() {
             if(!confirm(`⚠️ ئاگاداری: ڕیزی ژمارە ${skippedRows.join('، ')} کاڵایان هەڵبژێردراوە بەڵام بڕ یان نرخیان نادروست/بەتاڵە، بۆیە پشتگوێ خران.\n\nئایا دەتەوێت بەردەوام بیت بەبێ ئەم ڕیزانە؟`)) return;
         }
         
-        // چاککردنی هەڵە (Race condition): بڕوانە هەمان تێبینی لەناو submitInwardVoucher().
+        // چاککردنی هەڵە (Race condition): بڕوانە هەمان تێبینی درێژی لەناو submitInwardVoucher()
+        // — پشکنین ئێستا لەسەر بوونی ڕاستەقینەی وەسڵ لەناو لیستدا دەکرێت.
         let voucherNoBeforeRenumber = voucherNo;
-        if(voucherNo === "PR-" + nextPRVoucherNo) {
+        if(!prVouchers.some(v => v.voucherNo === voucherNo)) {
             try {
                 const { data: freshNo, error: cErr } = await sb.rpc('get_next_counter', { p_key: 'nextPRVoucherNo' });
                 // چاککردنی هەڵە: بڕوانە تێبینی سەرەکی و درێژی لەناو submitInwardVoucher()
-                // (هەمان کێشەی nextVoucherNo=freshNo).
-                if(!cErr && freshNo) { voucherNo = "PR-" + freshNo; nextPRVoucherNo = freshNo + 1; }
+                // (freshNo پێویستی بە +1 نییە).
+                if(!cErr && freshNo) { voucherNo = "PR-" + freshNo; nextPRVoucherNo = freshNo; }
             } catch(e) { console.error('atomic counter fetch failed, using local number', e); }
         }
         // چاککردنی هەڵە: بڕوانە هەمان تێبینی لەناو submitInwardVoucher() — گواستنەوەی
@@ -9037,6 +9164,9 @@ var qrcode = function() {
 
             voucherItems.push({ code, name: item.name, qty, price: priceInput/factor, total: qty*(priceInput/factor), curr: curr, factor: factor, condition: condition, uomType: uomSel.value,
                 note: (rows[i].querySelector('.row-ret-note') ? rows[i].querySelector('.row-ret-note').value.trim() : ''),
+                // نوێ: ژێر-شوێنی ئارەزوومەندانەی ئەم ڕیزە بە تایبەتی — تەنها بۆ FROM_SITE
+                // واتای هەیە (بڕوانە تێبینی سەرەوەی ستوونی "ژێر-شوێن" لەناو HTML‌ی خشتەکە).
+                location: (type === "FROM_SITE" && rows[i].querySelector('.row-ret-subloc') && !rows[i].querySelector('.row-ret-subloc').disabled) ? rows[i].querySelector('.row-ret-subloc').value : '',
                 // نوێ: تەنها بۆ TO_SUPPLIER پڕدەبێتەوە — بەهای WAC ی کاتی گەڕانەوە و کۆی
                 // جیاوازی نێوان ئەو بەهایە و نرخی ڕاستەقینەی گەڕانەوە (قازانج > 0 / زیان < 0).
                 bookValueWac: (type === "TO_SUPPLIER") ? bookValueWac : 0,
@@ -9085,14 +9215,15 @@ var qrcode = function() {
                 return;
             }
         }
-        // چاککردنی هەڵە (Race condition): بڕوانە هەمان تێبینی لەناو submitInwardVoucher().
+        // چاککردنی هەڵە (Race condition): بڕوانە هەمان تێبینی درێژی لەناو submitInwardVoucher()
+        // — پشکنین ئێستا لەسەر بوونی ڕاستەقینەی وەسڵ لەناو لیستدا دەکرێت.
         let voucherNoBeforeRenumber = voucherNo;
-        if(voucherNo === "RET-" + nextReturnVoucherNo) {
+        if(!returnVouchers.some(v => v.voucherNo === voucherNo)) {
             try {
                 const { data: freshNo, error: cErr } = await sb.rpc('get_next_counter', { p_key: 'nextReturnVoucherNo' });
                 // چاککردنی هەڵە: بڕوانە تێبینی سەرەکی و درێژی لەناو submitInwardVoucher()
-                // (هەمان کێشەی nextVoucherNo=freshNo).
-                if(!cErr && freshNo) { voucherNo = "RET-" + freshNo; nextReturnVoucherNo = freshNo + 1; }
+                // (freshNo پێویستی بە +1 نییە).
+                if(!cErr && freshNo) { voucherNo = "RET-" + freshNo; nextReturnVoucherNo = freshNo; }
             } catch(e) { console.error('atomic counter fetch failed, using local number', e); }
         }
         // چاککردنی هەڵە: بڕوانە هەمان تێبینی لەناو submitInwardVoucher() — گواستنەوەی
@@ -9253,7 +9384,7 @@ var qrcode = function() {
             const { data: freshNo, error: cErr } = await sb.rpc('get_next_counter', { p_key: 'nextAdjVoucherNo' });
             // چاککردنی هەڵە: بڕوانە تێبینی سەرەکی و درێژی لەناو submitInwardVoucher()
             // (هەمان کێشەی nextVoucherNo=freshNo).
-            if(!cErr && freshNo) { adjNo = "ADJ-" + freshNo; nextAdjVoucherNo = freshNo + 1; }
+            if(!cErr && freshNo) { adjNo = "ADJ-" + freshNo; nextAdjVoucherNo = freshNo; }
         } catch(e) { console.error('atomic counter fetch failed, using local number', e); }
         adjustmentVouchers.push({ voucherNo: adjNo, date: getLocalDateTimeString(), items: adjItems.map(({_staleSysQty, ...rest}) => rest) });
         // چاککردنی هەڵە (کۆنترۆڵی دارایی): بڕوانە هەمان تێبینی لەناو submitInwardVoucher().
@@ -9469,6 +9600,11 @@ var qrcode = function() {
                 // نوێ: گەڕاندنەوەی ڕوونکردنەوەی هەڵگیراوی ئەم ڕیزە (ئەگەر هەبووبێت)
                 let outNoteEl = row.querySelector('.row-out-note');
                 if(outNoteEl) outNoteEl.value = item.note || '';
+                // نوێ: گەڕاندنەوەی ژێر-شوێنی هەڵگیراوی ئەم ڕیزە (ئەگەر هەبووبێت). addOutwardRow()
+                // پێشتر dropdown‌ەکەی بە ژێر-شوێنەکانی v.project پڕکردووەتەوە (چونکە outProject
+                // پێش ئەم لووپە دانراوە، بڕوانە سەرەوە)، بۆیە تەنها پێویستە بەهاکە دابنرێت.
+                let outSublocEl = row.querySelector('.row-out-subloc');
+                if(outSublocEl && item.location) outSublocEl.value = item.location;
                 calcOutwardRow(idx, true); // true = skipFifoRecalc، بۆ پاراستنی نرخی مێژووی
                 // چاککردنی هەڵە: بەکارهێنانی بڕی هەڵگیراوی "باڵانسی بەردەست" ی ئەو کاتەی وەسڵ
                 // پاشکەوتکرا، لە جیاتی زانا نەبوونی (بەهای سفری سەرەتایی)
@@ -9542,6 +9678,11 @@ var qrcode = function() {
                 // نوێ: گەڕاندنەوەی ڕوونکردنەوەی هەڵگیراوی ئەم ڕیزە (ئەگەر هەبووبێت)
                 let retNoteEl = row.querySelector('.row-ret-note');
                 if(retNoteEl) retNoteEl.value = item.note || '';
+                // نوێ: گەڕاندنەوەی ژێر-شوێنی هەڵگیراوی ئەم ڕیزە (ئەگەر هەبووبێت). addReturnRow()
+                // پێشتر dropdown‌ەکەی بە ژێر-شوێنەکانی v.location پڕکردووەتەوە (چونکە retLocation
+                // پێش ئەم لووپە دانراوە، بڕوانە سەرەوە)، بۆیە تەنها پێویستە بەهاکە دابنرێت.
+                let retSublocEl = row.querySelector('.row-ret-subloc');
+                if(retSublocEl && item.location) retSublocEl.value = item.location;
                 calcReturnRow(idx);
             });
         }
@@ -10844,23 +10985,24 @@ var qrcode = function() {
         let allEntries = [];
 
         outwardVouchers.forEach(v => {
+            let vDate = parseStoredDate(v.date).getTime();
+            if(sDate && vDate < new Date(sDate).getTime()) return;
+            if(eDate && vDate > getEndOfDayTimestamp(eDate)) return;
             // چاککردنی هەڵە: پێشتر ئێرە بەراوردی وشەیی ورد (===) دەکرا، لەکاتێکدا خودی خانەی
             // "پڕۆژە" لە وەسڵی ڕۆشتوودا خانەیەکی ئازادی نووسینە (هەمان کێشەی ناوی شوێن لە
             // وەسڵی گەڕانەوەدا). ئەگەر ناوی پڕۆژە بە جۆرێکی کەمێک جیاواز نووسرابێت (بۆ نموونە
             // بۆشاییەکی زیادە یان گەورە/بچووکی پیت)، ئەو وەسڵە بەبێ ئاگاداری لە ڕاپۆرت دەرناکەوت
             // — تێچووی ڕاستەقینەی پڕۆژە کەمتر دەردەکەوت. ئێستا هەمان normalizeNameForCompare
             // بەکاردێت کە بۆ گەڕانەوەکان لە خوارەوە بەکارهاتووە.
-            // نوێ: لە جیاتی بەراوردی تەنها یەک ناو، ئێستا بەراورد دەکرێت لەگەڵ ناوی شوێنی
-            // هەڵبژێردراو *و* هەموو ژێر-شوێنەکانی (matchNames) — بۆ کۆکردنەوەی تێچووی دار.
-            if(matchNames.includes(normalizeNameForCompare(v.project))) {
-                let vDate = parseStoredDate(v.date).getTime();
-                if(sDate && vDate < new Date(sDate).getTime()) return;
-                if(eDate && vDate > getEndOfDayTimestamp(eDate)) return;
-                
-                v.items.forEach(it => {
-                    allEntries.push({ date: v.date, sortDate: vDate, voucherNo: v.voucherNo, code: it.code, name: it.name, qty: it.qty, price: it.price, total: it.total, curr: v.curr, isReturn: false, locationName: v.project });
-                });
-            }
+            // نوێ: بەراوردکردن ئێستا لەسەر ئاستی *هەر کاڵایەکە بە تایبەتی*، نەک هەموو وەسڵ
+            // پێکەوە — چونکە ئێستا هەر کاڵایەک دەتوانێت ژێر-شوێنی خۆی هەبێت (بڕوانە تێبینی
+            // ستوونی "ژێر-شوێن" لای فۆرمی وەسڵی ڕۆشتوو). ئەگەر کاڵایەک ژێر-شوێنی خۆی
+            // دیارینەکردبوو، ناوی گشتی وەسڵەکە (v.project) بەکاردێت — وەک پێشوو.
+            v.items.forEach(it => {
+                let effectiveLocation = it.location || v.project;
+                if(!matchNames.includes(normalizeNameForCompare(effectiveLocation))) return;
+                allEntries.push({ date: v.date, sortDate: vDate, voucherNo: v.voucherNo, code: it.code, name: it.name, qty: it.qty, price: it.price, total: it.total, curr: v.curr, isReturn: false, locationName: effectiveLocation });
+            });
         });
 
         // چاککردنی هەڵە: بەراوردی ناوی پڕۆژە بۆ گەڕانەوە پێشتر بە دروستی وشەیی (===) دەکرا،
@@ -10869,15 +11011,18 @@ var qrcode = function() {
         // بەبێ ئاگاداری لە کۆی تێچووی پڕۆژە دەرناچوو و تێچووی پڕۆژە بە هەڵە زیاتر دەردەکەوت.
         // ئێستا هەمان normalizeNameForCompare بەکاردێت کە بۆ پشکنینی سنووری گەڕانەوە بەکارهات.
         returnVouchers.forEach(v => {
-            if(v.type === 'FROM_SITE' && matchNames.includes(normalizeNameForCompare(v.location))) {
-                let vDate = parseStoredDate(v.date).getTime();
-                if(sDate && vDate < new Date(sDate).getTime()) return;
-                if(eDate && vDate > getEndOfDayTimestamp(eDate)) return;
+            if(v.type !== 'FROM_SITE') return;
+            let vDate = parseStoredDate(v.date).getTime();
+            if(sDate && vDate < new Date(sDate).getTime()) return;
+            if(eDate && vDate > getEndOfDayTimestamp(eDate)) return;
 
-                v.items.forEach(it => {
-                    allEntries.push({ date: v.date, sortDate: vDate, voucherNo: v.voucherNo, code: it.code, name: it.name + ' (گەڕاوەتەوە)', qty: -it.qty, price: it.price, total: -it.total, curr: v.curr, isReturn: true, locationName: v.location });
-                });
-            }
+            // نوێ: هەمان بنەمای وەسڵی ڕۆشتوو لە سەرەوە — بەراوردکردن لەسەر ئاستی هەر
+            // کاڵایەکە، بەکارهێنانی it.location ئەگەر هەبوو، ئەگەرنا v.location‌ی گشتی.
+            v.items.forEach(it => {
+                let effectiveLocation = it.location || v.location;
+                if(!matchNames.includes(normalizeNameForCompare(effectiveLocation))) return;
+                allEntries.push({ date: v.date, sortDate: vDate, voucherNo: v.voucherNo, code: it.code, name: it.name + ' (گەڕاوەتەوە)', qty: -it.qty, price: it.price, total: -it.total, curr: v.curr, isReturn: true, locationName: effectiveLocation });
+            });
         });
 
         allEntries.sort((a, b) => a.sortDate - b.sortDate);
@@ -11219,12 +11364,14 @@ var qrcode = function() {
 
         // چاککردنی هەڵە (Race condition): بەکارهێنانی هەمان میکانیزمی atomic counter کە
         // submitInwardVoucher بەکاری دەهێنێت (بڕوانە تێبینی سەرەکی لەسەرووی ئەم فەنکشنە).
-        if(voucherNo === "IN-VOU-" + nextVoucherNo) {
+        // چاککردنی هەڵەیەکی گەورەتر: پشکنین ئێستا لەسەر بوونی ڕاستەقینەی وەسڵ لەناو
+        // لیستدا دەکرێت، نەک بەراوردکردن لەگەڵ nextVoucherNo‌ی کاش کراو.
+        if(!inwardVouchers.some(v => v.voucherNo === voucherNo)) {
             try {
                 const { data: freshNo, error: cErr } = await sb.rpc('get_next_counter', { p_key: 'nextVoucherNo' });
                 // چاککردنی هەڵە: بڕوانە تێبینی سەرەکی و درێژی لەناو submitInwardVoucher()
-                // (هەمان کێشەی nextVoucherNo=freshNo).
-                if(!cErr && freshNo) { voucherNo = "IN-VOU-" + freshNo; nextVoucherNo = freshNo + 1; }
+                // (freshNo پێویستی بە +1 نییە).
+                if(!cErr && freshNo) { voucherNo = "IN-VOU-" + freshNo; nextVoucherNo = freshNo; }
                 else { nextVoucherNo++; }
             } catch(e) { console.error('atomic counter fetch failed, using local number', e); nextVoucherNo++; }
         }
@@ -11403,14 +11550,19 @@ var qrcode = function() {
             if(changedData.pr && changedData.pr.length) syncPromises.push(syncPRToSupabase(changedData.pr));
             if(changedData.return && changedData.return.length) syncPromises.push(syncReturnToSupabase(changedData.return));
         }
-        // چاککردن (بەرهەمی مردوو سڕایەوە): nextItemCodeId هەرگیز بۆ دروستکردنی کۆدی
-        // کاڵا بەکارناهێنرێت (سیستەم بە شێوەی گروپ.ژمارە کار دەکات)، بۆیە sync‌کردنی
-        // ئەم ژمارە بۆ Supabase تەنها نووسینێکی زیادەی بێ کارلێک بوو — لابرا.
-        syncPromises.push(
-            syncCounter('nextVoucherNo', nextVoucherNo), syncCounter('nextOutVoucherNo', nextOutVoucherNo),
-            syncCounter('nextPRVoucherNo', nextPRVoucherNo), syncCounter('nextReturnVoucherNo', nextReturnVoucherNo),
-            syncCounter('nextAdjVoucherNo', nextAdjVoucherNo)
-        );
+        // چاککردنی هەڵەیەکی گەورە (سەرچاوەی کێشەی "دەستکاری = دروستکردنی وەسڵی نوێ"):
+        // پێشتر لێرەدا، دوای *هەر* پاشکەوتکردنێک لە سیستمدا (تەنانەت ئەوانەی هیچ پەیوەندییان
+        // بە ژمارەی وەسڵەوە نەبوو، وەک دەستکاریکردنی کاڵایەک)، هەموو ٥ ژمارە داهاتووەکان
+        // (nextVoucherNo، nextOutVoucherNo، هتد) خۆکار دەنووسرانەوە بۆ Supabase بە بەکارهێنانی
+        // هەرچییەک لای وێبگەڕی ئەم بەکارهێنەرە لە بیردابوو لەو ساتەدا. کێشەکە: ئەم ژمارانە
+        // پێشتر بە فەنکشنی atomic (get_next_counter، لای سێرڤەر) ڕاستەوخۆ و بە دروستی
+        // پاشکەوتکراون لە ساتی خۆیاندا — نووسینەوەیەکی جیای (non-atomic) وەک ئەمە دەتوانێت
+        // بە هەڵە ئەو ژمارە دروستە بگۆڕێت بۆ ژمارەیەکی کۆن/هەڵە (بۆ نموونە ئەگەر وێبگەڕی
+        // ئەم بەکارهێنەرە داتای کۆنتری نوێنەرایەتی بکات)، کە دواتر وایکرد ژمارەی وەسڵ بە
+        // هەڵە دووبارە بێتەوە یان ژمارەیەک بە تەواوی بازبدرێت. ئێستا ئەم نووسینەوەیە
+        // بە تەواوی لابرا — ژمارەکان تەنها لەلایەن get_next_counter‌ەوە (لای submitInwardVoucher
+        // و هاوشێوەکانی) و لای شاشەی ڕێکخستنی دەستی (بۆ کاتی دروستکردنەوەی بەڕێکخستنی
+        // ژمارەکان) نووسرانەوە بۆ Supabase.
         await Promise.all(syncPromises);
         performAdvancedStockSearch();
         renderVoucherHistory();
@@ -12382,7 +12534,7 @@ var qrcode = function() {
             const { data: freshNo, error: cErr } = await sb.rpc('get_next_counter', { p_key: 'nextAdjVoucherNo' });
             // چاککردنی هەڵە: بڕوانە تێبینی سەرەکی و درێژی لەناو submitInwardVoucher()
             // (هەمان کێشەی nextVoucherNo=freshNo).
-            if(!cErr && freshNo) { adjNo = "ADJ-" + freshNo; nextAdjVoucherNo = freshNo + 1; }
+            if(!cErr && freshNo) { adjNo = "ADJ-" + freshNo; nextAdjVoucherNo = freshNo; }
         } catch(e) { console.error('atomic counter fetch failed, using local number', e); }
         adjustmentVouchers.push({
             voucherNo: adjNo,
