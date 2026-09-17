@@ -8268,13 +8268,36 @@ var qrcode = function() {
         // (بەتاڵ یان سفر) تێدابوو، بە بێدەنگی لادەدرا و بەکارهێنەر هیچ ئاگاداریەکی
         // نەدەبیست. ئێستا ئەم ڕیزانە تۆمار دەکرێن تاکو دوای هەوڵدان ئاگاداری بدرێت.
         let skippedRows = [];
+        // چاککردنی هەڵەی ونبوونی داتا (نوێ): پێشتر ئەم ڕیزانە (کاڵا هەڵبژێردراو بەڵام نرخ
+        // بەتاڵ/سفر) بە تەواوی لادەدران و هیچ شوێنەوارێکیان نەدەمایەوە، بۆیە ئەگەر
+        // بەکارهێنەر وەسڵەکەی پاشکەوت بکردایە و دواتر بگەڕایەتەوە سەری، ئەو کاڵایە ونبووبوو.
+        // ئێستا لەناو لیستێکی جیاواز (pendingItems) هەڵدەگیرێن. ئەم لیستە هەرگیز ناچێتە ناو
+        // v.items، بۆیە هیچ کاریگەرییەکی نییە لەسەر باڵانس، WAC، FIFO، ڕاپۆرت یان هیچ
+        // حسابێکی تر — تەنها کاتێک وەسڵەکە دووبارە دەکرێتەوە، ئەو ڕیزانە وەک خۆیان
+        // دەگەڕێنەوە تاکو نرخیان بۆ دابنرێت.
+        let pendingItems = [];
 
         for(let i=0; i<rows.length; i++) {
             let code = rows[i].querySelector('.row-in-select').value;
             let qtyInput = parseFloat(rows[i].querySelector('.row-qty').value) || 0;
             let priceInput = parseFloat(rows[i].querySelector('.row-price').value) || 0;
-            if(!code || qtyInput <= 0 || priceInput <= 0) {
-                if(code) skippedRows.push(i + 1);
+            if(!code) continue;
+            if(qtyInput <= 0 || priceInput <= 0) {
+                let pItem = inventory.find(inv => inv.code === code);
+                let pUomSel = rows[i].querySelector('.row-uom-select');
+                let pOpt = (pUomSel && pUomSel.selectedIndex >= 0) ? pUomSel.options[pUomSel.selectedIndex] : null;
+                let pFactor = (pOpt ? parseFloat(pOpt.getAttribute('data-factor')) : 1) || 1;
+                pendingItems.push({
+                    code: code,
+                    name: pItem ? pItem.name : code,
+                    qtyInput: qtyInput,
+                    priceInput: priceInput,
+                    factor: pFactor,
+                    uomType: pUomSel ? pUomSel.value : 'BASE',
+                    note: (rows[i].querySelector('.row-in-note') ? rows[i].querySelector('.row-in-note').value.trim() : ''),
+                    pendingPrice: true
+                });
+                skippedRows.push(i + 1);
                 continue;
             }
 
@@ -8299,7 +8322,13 @@ var qrcode = function() {
             voucherItems.push({ code: code, name: item.name, qty: qty, price: price, total: qty*price, curr: curr, factor: factor, uomType: uomSel.value, note: (rows[i].querySelector('.row-in-note') ? rows[i].querySelector('.row-in-note').value.trim() : '') });
         }
 
-        if(voucherItems.length === 0) { alert('تکایە لانی کەم کاڵایەک زیاد بکە'); return; }
+        // چاککردنی هەڵە (نوێ): ئەگەر هەموو ڕیزەکان «چاوەڕوانی نرخ» بن، پێشتر وەسڵەکە
+        // بە تەواوی ڕەت دەکرایەوە و هەموو کارەکەی بەکارهێنەر لەدەست دەچوو. ئێستا ڕێگە
+        // دەدرێت وەک وەسڵێکی چاوەڕوانی نرخ پاشکەوت بکرێت (بەبێ هیچ کاریگەرییەک لەسەر کۆگا).
+        if(voucherItems.length === 0 && pendingItems.length === 0) { alert('تکایە لانی کەم کاڵایەک زیاد بکە'); return; }
+        if(voucherItems.length === 0) {
+            if(!confirm('ℹ️ هیچ ڕیزێکی تەواو (بە بڕ و نرخ) لەم وەسڵەدا نییە.\n\nوەسڵەکە تەنها بە ڕیزی «چاوەڕوانی نرخ» پاشکەوت دەکرێت: هیچ کاڵایەک ناچێتە ناو کۆگا و هیچ نرخێک حیساب ناکرێت، بەڵام ڕیزەکان ون نابن و دەتوانیت دواتر بگەڕێیتەوە و نرخیان بۆ دابنێیت.\n\nبەردەوام بم؟')) return;
+        }
 
         // چاککردنی هەڵەیەکی حسابی (بەرپرسی کۆگا): پێشتر پشکنینی "زۆرترین ئاستی کۆگا"
         // لەناو خودی for-loopی سەرەوە بوو، بۆیە هەر ڕیزێک بە جیایی و لەسەر بنەمای
@@ -8325,7 +8354,7 @@ var qrcode = function() {
         // چاککردنی هەڵە: ئاگاداریدانی بەکارهێنەر ئەگەر ڕیزێک کاڵای هەڵبژێردرابوو بەڵام
         // بڕ/نرخی نادروست بووبێت و لادرابێت، تاکو داتا بەبێ زانین لەدەست نەچێت.
         if(skippedRows.length > 0) {
-            if(!confirm(`⚠️ ئاگاداری: ڕیزی ژمارە ${skippedRows.join('، ')} کاڵایان هەڵبژێردراوە بەڵام بڕ یان نرخیان نادروست/بەتاڵە، بۆیە پشتگوێ خران و پاشکەوت نابن.\n\nئایا دەتەوێت بەردەوام بیت بەبێ ئەم ڕیزانە؟`)) return;
+            if(!confirm(`ℹ️ تێبینی: ڕیزی ژمارە ${skippedRows.join('، ')} کاڵایان هەڵبژێردراوە بەڵام بڕ یان نرخیان بەتاڵ/سفرە.\n\nئەم ڕیزانە وەک «چاوەڕوانی نرخ» لەگەڵ وەسڵەکە پاشکەوت دەکرێن و ون نابن — کاتێک دووبارە وەسڵەکە بکەیتەوە دیسان دەردەکەون تاکو نرخیان بۆ دابنێیت. بەڵام تا ئەو کاتە نایەنە ناو باڵانسی کۆگا و هیچ نرخێکیان بۆ حیساب ناکرێت.\n\nبەردەوام بم بە پاشکەوتکردن؟`)) return;
         }
 
         if(maxStockWarnings.length > 0) {
@@ -8409,7 +8438,10 @@ var qrcode = function() {
         let inwardAuditBefore = existingInwardVoucher ? { supplier: existingInwardVoucher.supplier, supplierInvoiceNo: existingInwardVoucher.supplierInvoiceNo, poNo: existingInwardVoucher.poNo, items: existingInwardVoucher.items } : null;
 
         inwardVouchers = inwardVouchers.filter(v => v.voucherNo !== voucherNo);
-        inwardVouchers.push({ voucherNo, date: dateVal, supplier, supplierInvoiceNo: invoiceNo, poNo, storekeeper, items: voucherItems, curr: curr, attachments: voucherAttachmentsTemp.IN[voucherNo] || [] });
+        inwardVouchers.push({ voucherNo, date: dateVal, supplier, supplierInvoiceNo: invoiceNo, poNo, storekeeper, items: voucherItems, pendingItems: pendingItems, curr: curr, attachments: voucherAttachmentsTemp.IN[voucherNo] || [] });
+        // پاڵپشتی ناوخۆیی (بڕوانە savePendingInwardLocal): بۆ ئەوەی ئەم ڕیزانە تەنانەت
+        // ئەگەر ستوونی pending_items لە داتابەیس نەبێتیش، دوای Refresh ون نەبن.
+        savePendingInwardLocal(voucherNo, pendingItems);
         registerSupplier(supplier);
         logAudit(inwardAuditBefore ? 'edit_inward' : 'create_inward', 'inward', voucherNo, { before: inwardAuditBefore, after: { supplier, supplierInvoiceNo: invoiceNo, poNo, items: voucherItems } });
         
@@ -9559,6 +9591,32 @@ var qrcode = function() {
                 if(inNoteEl) inNoteEl.value = item.note || '';
                 calcInwardRow(idx);
             });
+            // نوێ: گەڕاندنەوەی ڕیزەکانی «چاوەڕوانی نرخ» (ئەو کاڵایانەی هەڵبژێردران بەڵام
+            // نرخیان بۆ دانەنرا). ئەمانە لە v.pendingItems ـەوە دێن نەک لە v.items، بۆیە
+            // هیچ کاریگەرییەکیان لەسەر کۆگا/نرخ نییە — تەنها دەگەڕێنەوە ناو فۆرمەکە تاکو
+            // بەکارهێنەر نرخیان بۆ دابنێت و دووبارە پاشکەوت بکات.
+            // ئەگەر داتابەیس ستوونی pending_items ی نەبێت، لە پاشکەوتی ناوخۆییەوە وەردەگیرێن.
+            let pendingList = (v.pendingItems && v.pendingItems.length) ? v.pendingItems : getPendingInwardLocal(v.voucherNo);
+            (pendingList || []).forEach(p => {
+                addInwardRow();
+                let pIdx = tbody.children.length - 1;
+                let pRow = tbody.children[pIdx];
+                pRow.querySelector('.row-in-select').value = p.code;
+                let pOrig = inventory.find(inv => inv.code === p.code);
+                if(pOrig) fillUnitOptions(pRow.querySelector('.row-uom-select'), pOrig);
+                let pUomSel = pRow.querySelector('.row-uom-select');
+                if(p.uomType) pUomSel.value = p.uomType;
+                pUomSel.setAttribute('data-prev-factor', p.factor || 1);
+                pRow.querySelector('.row-qty').value = (p.qtyInput > 0) ? p.qtyInput : 0;
+                let pPriceEl = pRow.querySelector('.row-price');
+                pPriceEl.value = (p.priceInput > 0) ? p.priceInput : '';
+                pPriceEl.style.background = '#fff8e1';
+                pPriceEl.title = '⚠️ ئەم ڕیزە هێشتا نرخی نییە — تا نرخی نەنووسیت و پاشکەوت نەکەیت، ناچێتە ناو کۆگا.';
+                if(!pPriceEl.placeholder) pPriceEl.placeholder = 'نرخی فاکتۆر بنووسە';
+                let pNoteEl = pRow.querySelector('.row-in-note');
+                if(pNoteEl) pNoteEl.value = p.note || '';
+                calcInwardRow(pIdx);
+            });
         }
         if(type === 'OUT') {
             document.getElementById('outVoucherNo').value = v.voucherNo;
@@ -9899,7 +9957,7 @@ var qrcode = function() {
         if(type === 'PR') deletedVoucherData = prVouchers.find(x => x.voucherNo === vNo);
         if(type === 'RET') deletedVoucherData = returnVouchers.find(x => x.voucherNo === vNo);
 
-        if(type === 'IN') inwardVouchers = inwardVouchers.filter(x => x.voucherNo !== vNo);
+        if(type === 'IN') { inwardVouchers = inwardVouchers.filter(x => x.voucherNo !== vNo); savePendingInwardLocal(vNo, []); }
         if(type === 'OUT') outwardVouchers = outwardVouchers.filter(x => x.voucherNo !== vNo);
         // نوێ: ئەگەر ئەم وەسڵە ئامێر/سامانی بە کەسێک دابوو و هێشتا نەگەڕابووەتەوە (OUT)، ئەو
         // تۆمارە لادەبرێت — چونکە سڕینەوەی وەسڵەکە خۆی بڕەکە دەگەڕێنێتەوە ناو باڵانسی کۆگا،
@@ -11172,6 +11230,30 @@ var qrcode = function() {
         itemsForUomFill.forEach(({ uomSelectId, item }) => {
             fillUnitOptions(document.getElementById(uomSelectId), item);
         });
+    }
+
+    // ---- پاڵپشتی ناوخۆیی بۆ ڕیزەکانی «چاوەڕوانی نرخ» ----
+    // مەبەست: ئەگەر ستوونی pending_items لە داتابەیس دروست نەکرابێت، ئەم ڕیزانە دوای
+    // Refresh ون نەبن. هیچ پەیوەندییەکی بە حسابی کۆگا/نرخەوە نییە و لە هیچ ڕاپۆرتێکدا
+    // بەکارنایەت — تەنها یارمەتیدەرە بۆ گەڕاندنەوەی ڕیزەکان بۆ ناو فۆرمی وەسڵ.
+    const PENDING_IN_KEY = 'pendingItems_IN';
+
+    function readPendingInwardStore() {
+        try { return JSON.parse(localStorage.getItem(PENDING_IN_KEY)) || {}; }
+        catch(e) { return {}; }
+    }
+
+    function savePendingInwardLocal(voucherNo, arr) {
+        try {
+            let store = readPendingInwardStore();
+            if(arr && arr.length) store[voucherNo] = arr; else delete store[voucherNo];
+            localStorage.setItem(PENDING_IN_KEY, JSON.stringify(store));
+        } catch(e) { console.warn('پاشکەوتی ناوخۆیی ڕیزی چاوەڕوانی نرخ سەرکەوتوو نەبوو', e); }
+    }
+
+    function getPendingInwardLocal(voucherNo) {
+        let store = readPendingInwardStore();
+        return store[voucherNo] || [];
     }
 
     function calcStocktakeDiff(input, sysQty) {
@@ -14082,13 +14164,17 @@ async function deleteInventoryItemFromSupabase(code) {
 }
 
 // ---- وەسڵی هاتن ----
-function inwardToDb(v) {
-    return { voucher_no: v.voucherNo, date: v.date, supplier: v.supplier, supplier_invoice_no: v.supplierInvoiceNo, po_no: v.poNo,
+// نوێ: ستوونی pending_items بۆ ڕیزە «چاوەڕوانی نرخ»ـەکان. ئەگەر ئەم ستوونە لە داتابەیس
+// دروست نەکرابێت، فەنکشنی syncInwardToSupabase بە خۆکاری بەبێی هەوڵ دەداتەوە (بڕوانە خوارەوە).
+function inwardToDb(v, includePending = true) {
+    let o = { voucher_no: v.voucherNo, date: v.date, supplier: v.supplier, supplier_invoice_no: v.supplierInvoiceNo, po_no: v.poNo,
         storekeeper: v.storekeeper, items: v.items || [], curr: v.curr, attachments: v.attachments || [], is_opening: !!v.isOpening };
+    if(includePending) o.pending_items = v.pendingItems || [];
+    return o;
 }
 function inwardFromDb(r) {
     return { voucherNo: r.voucher_no, date: r.date, supplier: r.supplier, supplierInvoiceNo: r.supplier_invoice_no, poNo: r.po_no,
-        storekeeper: r.storekeeper, items: r.items || [], curr: r.curr, attachments: r.attachments || [], isOpening: r.is_opening };
+        storekeeper: r.storekeeper, items: r.items || [], pendingItems: r.pending_items || [], curr: r.curr, attachments: r.attachments || [], isOpening: r.is_opening };
 }
 // چاککردنی هەڵەیەکی زۆر گرنگی (Race Condition/Data-Loss): بڕوانە تێبینی سەرەکی لەناو
 // syncInventoryToSupabase() سەرەوە. ئێستا upsert بەسەر voucher_no بەکاردێت (پێویستە
@@ -14098,8 +14184,18 @@ async function syncInwardToSupabase(specificVouchers) {
     try {
         let vouchersToSync = (specificVouchers && specificVouchers.length) ? specificVouchers : inwardVouchers;
         if(vouchersToSync.length) {
-            const { error } = await sb.from('inward_vouchers').upsert(dedupeByKey(vouchersToSync, x => x.voucherNo).map(inwardToDb), { onConflict: 'voucher_no' });
-            if(error) throw error;
+            let uniqueVouchers = dedupeByKey(vouchersToSync, x => x.voucherNo);
+            const { error } = await sb.from('inward_vouchers').upsert(uniqueVouchers.map(v => inwardToDb(v, true)), { onConflict: 'voucher_no' });
+            if(error) {
+                // پاشەکشەی سەلامەت: ئەگەر ستوونی pending_items هێشتا لە داتابەیس دروست نەکرابێت،
+                // وەسڵەکە بەبێ ئەو ستوونە پاشکەوت دەکرێت تاکو هیچ داتایەکی سەرەکی لەدەست نەچێت.
+                let msg = (error.message || '') + ' ' + (error.details || '');
+                if(msg.includes('pending_items')) {
+                    const { error: e2 } = await sb.from('inward_vouchers').upsert(uniqueVouchers.map(v => inwardToDb(v, false)), { onConflict: 'voucher_no' });
+                    if(e2) throw e2;
+                    console.warn('ستوونی pending_items لە تەیبڵی inward_vouchers نییە — ڕیزەکانی چاوەڕوانی نرخ تەنها لەم دانیشتنەدا دەمێننەوە.');
+                } else throw error;
+            }
         }
     } catch(e) { console.error('sync inward failed', e); alert('⚠️ هەڵە لە هاوکاتکردنی وەسڵی هاتن: ' + e.message); }
 }
