@@ -5000,7 +5000,10 @@ var qrcode = function() {
         });
         outwardVouchers.forEach(v => {
             v.items.forEach(it => {
-                ensure(it.code).outward.push({ qty: parseFloat(it.qty || 0), date: v.date });
+                // نوێ: voucherNo زیادکراوە بۆ هەر ڕووداوێکی دەرچوون، تاکو کاتی دەستکاریکردنی
+                // وەسڵێکی ڕۆشتووی FIFO، بتوانرێت دۆخی کۆنی هەمان وەسڵ لە چینەکان لابدرێت
+                // (بڕوانە تێبینی سەرەکی لەناو buildItemEventsForMetrics).
+                ensure(it.code).outward.push({ qty: parseFloat(it.qty || 0), date: v.date, voucherNo: v.voucherNo });
             });
         });
         return idx;
@@ -5559,7 +5562,18 @@ var qrcode = function() {
     //    فۆرمدا هەمان نرخی جێگیرکراو بێت).
     // هاوکاری هاوبەش: دروستکردنی لیستی هەموو ڕووداوەکانی هاتوو/ڕۆشتووی کاڵایەک (بەپێی
     // ڕیزی ڕاستەقینەی بەروار)، بۆ بەکارهێنان لەلایەن هەردوو ڕێگای نرخنان (WAC و FIFO).
-    function buildItemEventsForMetrics(itemCode, isWithinCutoff) {
+    //
+    // چاککردنی هەڵەیەکی گرنگ (دووجار کەمکردنەوەی خۆی لە کاتی دەستکاریکردن): پێشتر
+    // کاتێک وەسڵێکی ڕۆشتووی پێشتر پاشکەوتکراو بۆ کاڵایەکی FIFO دەکرایەوە بۆ دەستکاری،
+    // نرخی FIFO لەسەر بنەمای چینەکان حیساب دەکرا بەبێ ئەوەی دۆخی کۆنی (پێش-دەستکاری)
+    // خودی هەمان وەسڵ لابدرێت لە لیستی ڕووداوەکانی دەرچوون — چونکە outwardVouchers
+    // هێشتا دۆخی کۆنی ئەم وەسڵەی تێدابوو (تا ساتی پاشکەوتکردنی کۆتایی). ئەنجام: بڕی
+    // خۆی وەسڵەکە دووجار لە چینەکان کەمدەکرایەوە (جارێک وەک "ڕووداوی کۆن"، جارێکی تریش
+    // بەشێوەی ئارەزوومەندانە کاتێک نرخی نوێی هەمان بڕ دەژمێردرا)، کە دەیتوانی بەهۆیەوە
+    // چینی FIFO بە هەڵە کەم دەربکەوێت و نرخێکی نادروست (یان ئاگاداری fallback بەبێ پێویست)
+    // دەرباز بکات. ئێستا پارامیتەری ئارەزوومەندانەی excludeOutVoucherNo زیادکراوە: ئەگەر
+    // دراوە، هەر ڕووداوێکی دەرچوون کە بەو ژمارە وەسڵەوە گرێدراوە پشتگوێ دەخرێت.
+    function buildItemEventsForMetrics(itemCode, isWithinCutoff, excludeOutVoucherNo) {
         let events = [];
         let entry = getVoucherIndex()[itemCode];
         if(entry) {
@@ -5571,7 +5585,10 @@ var qrcode = function() {
                 if(it.qty > 0) events.push({ date: it.date, dir: 'IN', qty: it.qty, price: it.price });
                 else events.push({ date: it.date, dir: 'OUT', qty: Math.abs(it.qty) });
             });
-            entry.outward.forEach(it => { if(isWithinCutoff(it.date)) events.push({ date: it.date, dir: 'OUT', qty: it.qty }); });
+            entry.outward.forEach(it => {
+                if(excludeOutVoucherNo && it.voucherNo === excludeOutVoucherNo) return;
+                if(isWithinCutoff(it.date)) events.push({ date: it.date, dir: 'OUT', qty: it.qty });
+            });
         }
         // ڕیزکردن بەپێی بەروار (Array.sort لە جاڤاسکریپتدا stable-ە، بۆیە ڕووداوی هاوبەرواردا
         // ڕیزی خۆی وەک خستنەڕووی ئێستا دەپارێزێت — کۆتایی چارەسەرێکی تەواو نییە بۆ کاتژمێری
@@ -5584,7 +5601,7 @@ var qrcode = function() {
     // نرخی خۆی جیا هەڵدەگیرێت، و کاتێک کاڵا دەردەچێت، لە کۆنترین چین (index 0) دەخۆرێت
     // هەتا داواکارییەکە تەواو بێت (First In, First Out). ئەم فەنکشنە لیستی چینە
     // ماوەکان دەگەڕێنێتەوە وەک بوونیان لە کۆتایی asOfDate.
-    function getFIFOLayersAsOf(itemCode, asOfDate) {
+    function getFIFOLayersAsOf(itemCode, asOfDate, excludeOutVoucherNo) {
         let openingBase = getOpeningBaseForItem(itemCode);
         let cutoff = asOfDate ? parseStoredDate(asOfDate) : null;
         let isWithinCutoff = function(entryDate) {
@@ -5593,7 +5610,7 @@ var qrcode = function() {
             if(isNaN(d.getTime())) return true;
             return d.getTime() <= cutoff.getTime();
         };
-        let events = buildItemEventsForMetrics(itemCode, isWithinCutoff);
+        let events = buildItemEventsForMetrics(itemCode, isWithinCutoff, excludeOutVoucherNo);
         let layers = [];
         if(openingBase.qty > 0) layers.push({ qty: openingBase.qty, price: openingBase.value / openingBase.qty });
         events.forEach(e => {
@@ -5633,9 +5650,13 @@ var qrcode = function() {
     // بارودۆخە تێیدا تۆمار دەکرێت (بڕی کەم/fallback price) تاکو بانگکەر (submitOutwardVoucher)
     // بتوانێت ئاگاداری ڕاستەقینە بدات و لە audit_log تۆماری بکات، نەک بە بێدەنگی
     // نرخێکی نادروست بگەڕێندرێتەوە بەبێ هیچ شوێنەوارێک.
-    function getFIFOConsumptionPrice(itemCode, qty, asOfDate, preConsumedQty, shortfallReport) {
+    // چاککردنی زیاتر (نەهێشتنی دووجار کەمکردنەوەی خۆی): پارامیتەری تازەی
+    // excludeOutVoucherNo (ئارەزوومەندانە) — کاتێک وەسڵێکی ڕۆشتووی پێشتر پاشکەوتکراو
+    // دەکرێتەوە بۆ دەستکاری، ژمارەی وەسڵەکە لێرە دەردەبڕدرێت تاکو dوخی کۆنی خودی ئەم
+    // وەسڵە لە چینەکانی FIFO لانەدرێت (بڕوانە تێبینی سەرەکی لەناو buildItemEventsForMetrics).
+    function getFIFOConsumptionPrice(itemCode, qty, asOfDate, preConsumedQty, shortfallReport, excludeOutVoucherNo) {
         if(qty <= 0) return 0;
-        let layers = getFIFOLayersAsOf(itemCode, asOfDate).map(l => ({ qty: l.qty, price: l.price }));
+        let layers = getFIFOLayersAsOf(itemCode, asOfDate, excludeOutVoucherNo).map(l => ({ qty: l.qty, price: l.price }));
         let pre = preConsumedQty || 0;
         while(pre > 1e-9 && layers.length > 0) {
             let front = layers[0];
@@ -5682,9 +5703,9 @@ var qrcode = function() {
     // (بۆ نموونە "١٠٠@٥٠٠٠ + ١٠٠@٦٠٠٠")، بۆ پیشاندان وەک tooltip لەسەر خانەی نرخ، تاکو
     // بەکارهێنەر بزانێت نرخی تێکەڵکراو لە کوێوە هاتووە، نەک تەنها یەک ژمارەی کۆتایی ببینێت.
     // (بڕوانە هەمان تێبینی preConsumedQty لەناو getFIFOConsumptionPrice سەرەوە)
-    function getFIFOConsumptionBreakdown(itemCode, qty, asOfDate, preConsumedQty) {
+    function getFIFOConsumptionBreakdown(itemCode, qty, asOfDate, preConsumedQty, excludeOutVoucherNo) {
         if(qty <= 0) return '';
-        let layers = getFIFOLayersAsOf(itemCode, asOfDate).map(l => ({ qty: l.qty, price: l.price }));
+        let layers = getFIFOLayersAsOf(itemCode, asOfDate, excludeOutVoucherNo).map(l => ({ qty: l.qty, price: l.price }));
         let pre = preConsumedQty || 0;
         while(pre > 1e-9 && layers.length > 0) {
             let front = layers[0];
@@ -7890,13 +7911,18 @@ var qrcode = function() {
                 // خواردراو تێدەپەڕێنرێت تاکو نرخی پێشبینیکراوی ئەم ڕیزە هەمان ئەوە بێت کە
                 // دواتر لە submitOutwardVoucher دا بە ڕاستی پاشکەوت دەکرێت.
                 let preConsumedQty = getOutwardAllocatedQtyInPriorRows(idx, code);
-                let fifoPrice = getFIFOConsumptionPrice(code, baseQty, asOfDate, preConsumedQty);
+                // چاککردنی هەڵە (دووجار کەمکردنەوەی خۆی): ژمارەی وەسڵی ئێستا وەک
+                // excludeOutVoucherNo دەنێردرێت تاکو ئەگەر ئەم وەسڵە پێشتر پاشکەوتکراو
+                // بێت و ئێستا بۆ دەستکاری کراوەتەوە، دۆخی کۆنی خۆی لە چینەکانی FIFO
+                // لانەدرێت (بڕوانە تێبینی سەرەکی لەناو buildItemEventsForMetrics).
+                let curVoucherNo = document.getElementById('outVoucherNo').value;
+                let fifoPrice = getFIFOConsumptionPrice(code, baseQty, asOfDate, preConsumedQty, null, curVoucherNo);
                 let priceInput = rows[idx].querySelector('.row-out-price');
                 priceInput.value = fifoPrice;
                 // نوێ: کاتێک بڕێک لە چەند چینی نرخی FIFO دەردەچێت، تووڵتیپ (title) زیاد
                 // دەکرێت لەسەر خانەی نرخ بۆ ئەوەی بەکارهێنەر بزانێت ئەم نرخە تێکەڵکراوە
                 // لە کوێوە هاتووە (بۆ نموونە "١٠٠@٥٠٠٠ + ١٠٠@٦٠٠٠")، نەک تەنها یەک ژمارە ببینێت.
-                let breakdown = getFIFOConsumptionBreakdown(code, baseQty, asOfDate, preConsumedQty);
+                let breakdown = getFIFOConsumptionBreakdown(code, baseQty, asOfDate, preConsumedQty, curVoucherNo);
                 priceInput.title = breakdown.includes('+') ? `📦 FIFO: ${breakdown}` : '';
             }
         }
@@ -8302,8 +8328,21 @@ var qrcode = function() {
             }
 
             let item = inventory.find(inv => inv.code === code);
+            // چاککردنی هەڵە (هەمان چەشنی هەڵەی "getAttribute"ی پێشوو، بەڵام لێرە بۆ کاڵا):
+            // ئەگەر کاڵاکە لەو ماوەیەدا (بۆ نموونە لەلایەن بەکارهێنەرێکی تر یان تابێکی
+            // تری هەمان بەکارهێنەر) لە inventory سڕابێتەوە یان کۆدەکەی گۆڕدرابێت پێش
+            // پاشکەوتکردنی ئەم وەسڵە، item دەبێتە undefined و دواتر item.name شکاندنی
+            // تەواوی پەڕەکەی لێ دەکەوتەوە. ئێستا وەسڵەکە بە ئاگاداریەکی ڕوون ڕادەگیرێت.
+            if(!item) { alert(`❌ ڕێگری کرا: کاڵای ژمارە (${i + 1}) (کۆد: ${code}) چیتر لە لیستی کاڵاکاندا بەردەست نییە — لەوانەیە سڕابێتەوە. تکایە پەڕەکە تازە بکەرەوە و کاڵاکە دیسان هەڵبژێرەوە.`); return; }
             let uomSel = rows[i].querySelector('.row-uom-select');
-            let factor = parseFloat(uomSel.options[uomSel.selectedIndex].getAttribute('data-factor')) || 1;
+            // چاککردنی هەڵە (هەڵەی چاوەڕوانی‌نەکراو لە کاتی پاشکەوتکردن): پێشتر ئێرە
+            // ڕاستەوخۆ uomSel.options[uomSel.selectedIndex].getAttribute(...) بانگ دەکرا
+            // بەبێ هیچ پشکنینێک. ئەگەر uomSel نەبووایە یان هیچ یەکەیەک هەڵنەبژێردرابایە
+            // (selectedIndex = -1، بۆ نموونە کاڵایەک بەبێ یەکەی هەڵگیراو)، ئەمە دەیبووە
+            // هۆی "Cannot read properties of undefined (reading 'getAttribute')" و
+            // وەستانی تەواوی پەڕەکە لەکاتی پاشکەوتکردندا. ئێستا وەک هەمان شێوازی
+            // پارێزراوی بەکارهاتوو لە calcInwardRow/calcOutwardRow (?. و فۆڵباک بۆ ١).
+            let factor = uomSel && uomSel.selectedIndex >= 0 ? (parseFloat(uomSel.options[uomSel.selectedIndex]?.getAttribute('data-factor')) || 1) : 1;
             
             let qty = qtyInput * factor;
             let price = priceInput / factor; 
@@ -8517,13 +8556,29 @@ var qrcode = function() {
         // چاککردنی زیاتر (Row-Level Sync): تەنها ئەو کاڵایانەی لەم وەسڵەدا هاتوون
         // (باڵانس/لاستمووڤ/... گۆڕدراون)، ئەم وەسڵە بەخۆی، و PRـی بەستراو (ئەگەر
         // receivedQty/status‌ی گۆڕدرابێت) دەنێردرێن — نەک هەموو کاڵا/وەسڵەکانی تر.
-        await saveAndRefresh({
-            inventory: voucherItems.map(vi => inventory.find(inv => inv.code === vi.code)).filter(Boolean),
-            inward: [inwardVouchers.find(v => v.voucherNo === voucherNo)].filter(Boolean),
-            pr: (poNo && poNo !== '-') ? [prVouchers.find(v => v.voucherNo === poNo)].filter(Boolean) : []
-        });
-        alert('✅ وەسڵی هاتوو بە سەرکەوتوویی پاشکەوتکرا.');
-        resetInwardFormForNewEntry();
+        //
+        // چاککردنی هەڵەیەکی زۆر گرنگ (بێدەنگ شکستهێنان/لەدەستچوونی داتا): پێشتر
+        // ئێرە بەبێ پشکنین ڕاستەوخۆ پەیامی "سەرکەوتوو" دەدرا و فۆرمەکە دەسڕدرایەوە،
+        // تەنانەت ئەگەر saveAndRefresh لە ڕاستیدا شکستی هێنابێت (بۆ نموونە لەژێر
+        // بارگرانی یان تۆڕی هێواش) — بڕوانە تێبینی سەرەکی لەناو syncInventoryToSupabase().
+        // ئێستا ئەگەر شکست هێنا، فۆرمەکە ناسڕدرێتەوە و داتای بەکارهێنەر دەمێنێتەوە.
+        let inSaveFailed = false;
+        try {
+            await saveAndRefresh({
+                inventory: voucherItems.map(vi => inventory.find(inv => inv.code === vi.code)).filter(Boolean),
+                inward: [inwardVouchers.find(v => v.voucherNo === voucherNo)].filter(Boolean),
+                pr: (poNo && poNo !== '-') ? [prVouchers.find(v => v.voucherNo === poNo)].filter(Boolean) : []
+            });
+        } catch(inSaveErr) {
+            console.error('submitInwardVoucher: saveAndRefresh failed', inSaveErr);
+            inSaveFailed = true;
+        }
+        if(inSaveFailed) {
+            alert('❌ پاشکەوتکردنی وەسڵی هاتوو لە سیستمی ناوەندیدا سەرکەوتوو نەبوو (کێشەی تۆڕ یان بارگرانی). داتاکەت هێشتا لەناو فۆرمەکەدایە — تکایە پەیوەندی ئینتەرنێت پشکنین بکە و دووبارە کرتە لەسەر "پاشکەوتکردن" بکە.');
+        } else {
+            alert('✅ وەسڵی هاتوو بە سەرکەوتوویی پاشکەوتکرا.');
+            resetInwardFormForNewEntry();
+        }
         } finally {
             if(inSubmitBtnEl) { inSubmitBtnEl.disabled = false; inSubmitBtnEl.textContent = inSubmitBtnEl.dataset.origText || '💾 پاشکەوتکردنی وەسڵی هاتوو'; }
         }
@@ -8628,8 +8683,11 @@ var qrcode = function() {
             }
 
             let item = inventory.find(inv => inv.code === code);
+            // چاککردنی هەڵە: بڕوانە هەمان تێبینی لەناو submitInwardVoucher.
+            if(!item) { alert(`❌ ڕێگری کرا: کاڵای ژمارە (${i + 1}) (کۆد: ${code}) چیتر لە لیستی کاڵاکاندا بەردەست نییە — لەوانەیە سڕابێتەوە. تکایە پەڕەکە تازە بکەرەوە و کاڵاکە دیسان هەڵبژێرەوە.`); return; }
             let uomSel = rows[i].querySelector('.row-out-uom-select');
-            let factor = parseFloat(uomSel.options[uomSel.selectedIndex].getAttribute('data-factor')) || 1;
+            // چاککردنی هەڵە: بڕوانە هەمان تێبینی لەناو submitInwardVoucher.
+            let factor = uomSel && uomSel.selectedIndex >= 0 ? (parseFloat(uomSel.options[uomSel.selectedIndex]?.getAttribute('data-factor')) || 1) : 1;
             let qty = qtyInput * factor;
 
             // چاککردنی هەڵەی دووجار ژمێردن: بڕوانە تێبینی سەرەکی لەناو getOpeningBaseForItem().
@@ -8671,7 +8729,11 @@ var qrcode = function() {
             // چینە ماوەکان (metrics.wac). ئەمە هەمان نرخەیە کە پێشتر لە calcOutwardRow()
             // پێشان درا، بۆیە بەکارهێنەر هیچ سوپرایزێک نابینێت لە کاتی پاشکەوتکردندا.
             let shortfallReport = {};
-            let effectivePrice = (item.costingMethod === 'FIFO') ? getFIFOConsumptionPrice(code, qty, dateVal, preConsumedQty, shortfallReport) : metrics.wac;
+            // چاککردنی هەڵە (دووجار کەمکردنەوەی خۆی): بڕوانە تێبینی لەناو calcOutwardRow
+            // و buildItemEventsForMetrics — voucherNo وەک excludeOutVoucherNo تێدەپەڕێنرێت
+            // تاکو ئەگەر ئەم وەسڵە پێشتر پاشکەوتکراو بێت و ئێستا دەستکاری بکرێت، دۆخی
+            // کۆنی خۆی لە چینەکانی FIFO دووجار کەم نەکاتەوە.
+            let effectivePrice = (item.costingMethod === 'FIFO') ? getFIFOConsumptionPrice(code, qty, dateVal, preConsumedQty, shortfallReport, voucherNo) : metrics.wac;
             if(shortfallReport.occurred) {
                 fifoShortfalls.push({ code: code, name: item.name, rowNo: i + 1, shortQty: shortfallReport.shortQty, fallbackPrice: shortfallReport.fallbackPrice });
             }
@@ -8765,7 +8827,8 @@ var qrcode = function() {
                 let itm = inventory.find(inv => inv.code === vi.code);
                 if(!itm || itm.costingMethod !== 'FIFO') return;
                 let preConsumed = fifoReConsumedByCode[vi.code] || 0;
-                let freshFifoPrice = getFIFOConsumptionPrice(vi.code, vi.qty, dateVal, preConsumed);
+                // چاککردنی هەڵە (دووجار کەمکردنەوەی خۆی): بڕوانە تێبینی لەناو calcOutwardRow.
+                let freshFifoPrice = getFIFOConsumptionPrice(vi.code, vi.qty, dateVal, preConsumed, null, voucherNo);
                 fifoReConsumedByCode[vi.code] = preConsumed + vi.qty;
                 if(freshFifoPrice > 0) {
                     vi.price = freshFifoPrice;
@@ -8889,15 +8952,27 @@ var qrcode = function() {
         updateLastMoveDateForAllItemsInVoucher(voucherItems, dateVal); // چاککردنی هەڵە: بەرواری ڕاستەقینەی وەسڵ بەکاردێت نەک بەرواری ئەمڕۆ
         updateLastOutwardDateForItems(voucherItems, dateVal); // زیادکراوە: بۆ وردی ڕاپۆرتی کاڵای مردوو
         localStorage.removeItem('draft_OUT');
-        await saveAndRefresh({
-            inventory: voucherItems.map(vi => inventory.find(inv => inv.code === vi.code)).filter(Boolean),
-            outward: [outwardVouchers.find(v => v.voucherNo === voucherNo)].filter(Boolean)
-        });
-        let successMsg = '✅ وەسڵی ڕۆشتوو بە سەرکەوتوویی پاشکەوتکرا.';
-        if(custodySkippedDueToPermission) successMsg += '\n⚠️ تۆمارکردنی «لای کێیە»ی ئامێر/سامانی ئەم وەسڵە نەکرا، چونکە دەسەڵاتی بەشی «ئامێری لای کەسان»ت نییە. تکایە بە ئەدمین بڵێ ئەم تۆمارە بە دەستی زیاد بکات.';
-        if(custodySyncFailed) successMsg += '\n⚠️ تۆمارکردنی «لای کێیە»ی ئامێر/سامان لە سیستمی ناوەندیدا (Supabase) سەرکەوتوو نەبوو (کێشەی تۆڕ). تکایە پەیوەندی ئینتەرنێت پشکنین بکە و بڵێی بە ئەدمین.';
-        alert(successMsg);
-        resetOutwardFormForNewEntry();
+        // چاککردنی هەڵەیەکی زۆر گرنگ (بێدەنگ شکستهێنان/لەدەستچوونی داتا): بڕوانە تێبینی
+        // سەرەکی لەناو syncInventoryToSupabase() و submitInwardVoucher.
+        let outSaveFailed = false;
+        try {
+            await saveAndRefresh({
+                inventory: voucherItems.map(vi => inventory.find(inv => inv.code === vi.code)).filter(Boolean),
+                outward: [outwardVouchers.find(v => v.voucherNo === voucherNo)].filter(Boolean)
+            });
+        } catch(outSaveErr) {
+            console.error('submitOutwardVoucher: saveAndRefresh failed', outSaveErr);
+            outSaveFailed = true;
+        }
+        if(outSaveFailed) {
+            alert('❌ پاشکەوتکردنی وەسڵی ڕۆشتوو لە سیستمی ناوەندیدا سەرکەوتوو نەبوو (کێشەی تۆڕ یان بارگرانی). داتاکەت هێشتا لەناو فۆرمەکەدایە — تکایە پەیوەندی ئینتەرنێت پشکنین بکە و دووبارە کرتە لەسەر "پاشکەوتکردن" بکە.');
+        } else {
+            let successMsg = '✅ وەسڵی ڕۆشتوو بە سەرکەوتوویی پاشکەوتکرا.';
+            if(custodySkippedDueToPermission) successMsg += '\n⚠️ تۆمارکردنی «لای کێیە»ی ئامێر/سامانی ئەم وەسڵە نەکرا، چونکە دەسەڵاتی بەشی «ئامێری لای کەسان»ت نییە. تکایە بە ئەدمین بڵێ ئەم تۆمارە بە دەستی زیاد بکات.';
+            if(custodySyncFailed) successMsg += '\n⚠️ تۆمارکردنی «لای کێیە»ی ئامێر/سامان لە سیستمی ناوەندیدا (Supabase) سەرکەوتوو نەبوو (کێشەی تۆڕ). تکایە پەیوەندی ئینتەرنێت پشکنین بکە و بڵێی بە ئەدمین.';
+            alert(successMsg);
+            resetOutwardFormForNewEntry();
+        }
         } finally {
             // چاککردنی هەڵەیەکی زۆر گرنگ (خاڵی ١): دووبارە چالاککردنەوەی دوگمەکە لە
             // هەموو دۆخێکدا (سەرکەوتوو بوو، ڕاگیرا بە return، یان هەڵەیەکی چاوەڕواننەکراو
@@ -8970,8 +9045,11 @@ var qrcode = function() {
             }
 
             let item = inventory.find(inv => inv.code === code);
+            // چاککردنی هەڵە: بڕوانە هەمان تێبینی لەناو submitInwardVoucher.
+            if(!item) { alert(`❌ ڕێگری کرا: کاڵای ژمارە (${i + 1}) (کۆد: ${code}) چیتر لە لیستی کاڵاکاندا بەردەست نییە — لەوانەیە سڕابێتەوە. تکایە پەڕەکە تازە بکەرەوە و کاڵاکە دیسان هەڵبژێرەوە.`); return; }
             let uomSel = rows[i].querySelector('.row-pr-uom-select');
-            let factor = parseFloat(uomSel.options[uomSel.selectedIndex].getAttribute('data-factor')) || 1;
+            // چاککردنی هەڵە: بڕوانە هەمان تێبینی لەناو submitInwardVoucher.
+            let factor = uomSel && uomSel.selectedIndex >= 0 ? (parseFloat(uomSel.options[uomSel.selectedIndex]?.getAttribute('data-factor')) || 1) : 1;
             let prPrice = priceInput / factor;
 
             // چاککردنی هەڵە: هیچ پشکنینێک نەبوو ئایا نرخی داخڵکراو زۆر جیاوازە لە نرخی
@@ -9046,9 +9124,21 @@ var qrcode = function() {
         // وەرگرتن لەدەست ناچێت.
         recalculatePRReceivedQty(voucherNo);
 
-        await saveAndRefresh({ pr: [prVouchers.find(v => v.voucherNo === voucherNo)].filter(Boolean) });
-        alert('✅ داواکاری کڕین بە سەرکەوتوویی پاشکەوتکرا');
-        resetPRFormForNewEntry();
+        // چاککردنی هەڵەیەکی زۆر گرنگ (بێدەنگ شکستهێنان/لەدەستچوونی داتا): بڕوانە تێبینی
+        // سەرەکی لەناو syncInventoryToSupabase() و submitInwardVoucher.
+        let prSaveFailed = false;
+        try {
+            await saveAndRefresh({ pr: [prVouchers.find(v => v.voucherNo === voucherNo)].filter(Boolean) });
+        } catch(prSaveErr) {
+            console.error('submitPRVoucher: saveAndRefresh failed', prSaveErr);
+            prSaveFailed = true;
+        }
+        if(prSaveFailed) {
+            alert('❌ پاشکەوتکردنی داواکاری کڕین لە سیستمی ناوەندیدا سەرکەوتوو نەبوو (کێشەی تۆڕ یان بارگرانی). داتاکەت هێشتا لەناو فۆرمەکەدایە — تکایە پەیوەندی ئینتەرنێت پشکنین بکە و دووبارە کرتە لەسەر "پاشکەوتکردن" بکە.');
+        } else {
+            alert('✅ داواکاری کڕین بە سەرکەوتوویی پاشکەوتکرا');
+            resetPRFormForNewEntry();
+        }
         } finally {
             if(prSubmitBtnEl) { prSubmitBtnEl.disabled = false; prSubmitBtnEl.textContent = prSubmitBtnEl.dataset.origText || '💾 پاشکەوتکردنی داواکاری'; }
         }
@@ -9125,8 +9215,13 @@ var qrcode = function() {
             }
 
             let item = inventory.find(inv => inv.code === code);
+            // چاککردنی هەڵە: بڕوانە هەمان تێبینی لەناو submitInwardVoucher. تێبینی:
+            // returnVouchers دەبێت پێش گەڕانەوە بگەڕێندرێتەوە بۆ originalReturnVouchersForCheck
+            // (هەمان ڕێسای پشکنینی نرخ لەسەرەوە)، نەک بە دۆخی پاڵاوتراو بمێنێتەوە.
+            if(!item) { alert(`❌ ڕێگری کرا: کاڵای ژمارە (${i + 1}) (کۆد: ${code}) چیتر لە لیستی کاڵاکاندا بەردەست نییە — لەوانەیە سڕابێتەوە. تکایە پەڕەکە تازە بکەرەوە و کاڵاکە دیسان هەڵبژێرەوە.`); returnVouchers = originalReturnVouchersForCheck; return; }
             let uomSel = rows[i].querySelector('.row-ret-uom-select');
-            let factor = parseFloat(uomSel.options[uomSel.selectedIndex].getAttribute('data-factor')) || 1;
+            // چاککردنی هەڵە: بڕوانە هەمان تێبینی لەناو submitInwardVoucher.
+            let factor = uomSel && uomSel.selectedIndex >= 0 ? (parseFloat(uomSel.options[uomSel.selectedIndex]?.getAttribute('data-factor')) || 1) : 1;
             let qty = qtyInput * factor;
 
             // چاککردنی هەڵەی حسابی: نرخی گەڕانەوە بۆ دابینکەر (TO_SUPPLIER) بە دەستی داخڵ
@@ -9281,12 +9376,24 @@ var qrcode = function() {
         // دابینکەر، وەک دەرچوونە) → lastOutwardDate.
         if(type === 'FROM_SITE') updateLastInwardDateForItems(voucherItems, dateVal);
         else if(type === 'TO_SUPPLIER') updateLastOutwardDateForItems(voucherItems, dateVal);
-        await saveAndRefresh({
-            inventory: voucherItems.map(vi => inventory.find(inv => inv.code === vi.code)).filter(Boolean),
-            return: [returnVouchers.find(v => v.voucherNo === voucherNo)].filter(Boolean)
-        });
-        alert('✅ وەسڵی گەڕانەوە بە سەرکەوتوویی تۆمارکرا');
-        resetReturnFormForNewEntry();
+        // چاککردنی هەڵەیەکی زۆر گرنگ (بێدەنگ شکستهێنان/لەدەستچوونی داتا): بڕوانە تێبینی
+        // سەرەکی لەناو syncInventoryToSupabase() و submitInwardVoucher.
+        let retSaveFailed = false;
+        try {
+            await saveAndRefresh({
+                inventory: voucherItems.map(vi => inventory.find(inv => inv.code === vi.code)).filter(Boolean),
+                return: [returnVouchers.find(v => v.voucherNo === voucherNo)].filter(Boolean)
+            });
+        } catch(retSaveErr) {
+            console.error('submitReturnVoucher: saveAndRefresh failed', retSaveErr);
+            retSaveFailed = true;
+        }
+        if(retSaveFailed) {
+            alert('❌ پاشکەوتکردنی وەسڵی گەڕانەوە لە سیستمی ناوەندیدا سەرکەوتوو نەبوو (کێشەی تۆڕ یان بارگرانی). داتاکەت هێشتا لەناو فۆرمەکەدایە — تکایە پەیوەندی ئینتەرنێت پشکنین بکە و دووبارە کرتە لەسەر "پاشکەوتکردن" بکە.');
+        } else {
+            alert('✅ وەسڵی گەڕانەوە بە سەرکەوتوویی تۆمارکرا');
+            resetReturnFormForNewEntry();
+        }
         } finally {
             if(retSubmitBtnEl) { retSubmitBtnEl.disabled = false; retSubmitBtnEl.textContent = retSubmitBtnEl.dataset.origText || '💾 پاشکەوتکردن'; }
         }
@@ -9421,12 +9528,26 @@ var qrcode = function() {
         adjustmentVouchers.push({ voucherNo: adjNo, date: getLocalDateTimeString(), items: adjItems.map(({_staleSysQty, ...rest}) => rest) });
         // چاککردنی هەڵە (کۆنترۆڵی دارایی): بڕوانە هەمان تێبینی لەناو submitInwardVoucher().
         logAudit('create_adjustment', 'adjustment', adjNo, { source: 'stocktake', items: adjItems });
-        await syncAdjustmentToSupabase([adjustmentVouchers.find(v => v.voucherNo === adjNo)].filter(Boolean));
-        // چاککردنی زیاتر (Row-Level Sync): تەنها ئەو کاڵایانەی لە ژمارتنەکەدا گۆڕدراون
-        // دەنێردرێن، نەک هەموو inventory.
-        await saveAndRefresh({ inventory: adjItems.map(ai => inventory.find(inv => inv.code === ai.code)).filter(Boolean) });
-        alert('✅ جێگیرکردنی جەرد ئەنجامدرا و جیاوازییەکان بە سەرکەوتوویی پاشکەوت کران.');
-        loadStocktakeItems();
+        // چاککردنی هەڵەیەکی زۆر گرنگ (بێدەنگ شکستهێنان/لەدەستچوونی داتا): بڕوانە تێبینی
+        // سەرەکی لەناو syncInventoryToSupabase() و submitInwardVoucher. تێبینی: adjItems
+        // هەر لەناو حافیزەدا دەمێنێتەوە (بڕوانە پوشکردنی adjustmentVouchers لەسەرەوە)، بۆیە
+        // کرتەی دووبارە لەسەر "جێگیرکردنی جەرد" دەتوانێت دووبارە هەوڵبدات.
+        let adjSaveFailed = false;
+        try {
+            await syncAdjustmentToSupabase([adjustmentVouchers.find(v => v.voucherNo === adjNo)].filter(Boolean));
+            // چاککردنی زیاتر (Row-Level Sync): تەنها ئەو کاڵایانەی لە ژمارتنەکەدا گۆڕدراون
+            // دەنێردرێن، نەک هەموو inventory.
+            await saveAndRefresh({ inventory: adjItems.map(ai => inventory.find(inv => inv.code === ai.code)).filter(Boolean) });
+        } catch(adjSaveErr) {
+            console.error('submitStocktakeAdjustments: sync/save failed', adjSaveErr);
+            adjSaveFailed = true;
+        }
+        if(adjSaveFailed) {
+            alert('❌ جێگیرکردنی جەرد لە سیستمی ناوەندیدا سەرکەوتوو نەبوو (کێشەی تۆڕ یان بارگرانی). تکایە پەیوەندی ئینتەرنێت پشکنین بکە و دووبارە کرتە لەسەر "جێگیرکردنی جەرد" بکە.');
+        } else {
+            alert('✅ جێگیرکردنی جەرد ئەنجامدرا و جیاوازییەکان بە سەرکەوتوویی پاشکەوت کران.');
+            loadStocktakeItems();
+        }
         } finally {
             if(stocktakePostBtnEl) { stocktakePostBtnEl.disabled = false; stocktakePostBtnEl.textContent = stocktakePostBtnEl.dataset.origText || '⚙️ جێگیرکردنی جەرد (Post Adjustments)'; }
         }
@@ -10147,6 +10268,10 @@ var qrcode = function() {
         inputs.forEach(el => el.setAttribute('disabled', true));
         let btnIds = LOCKABLE_BUTTONS_BY_FORM[formId] || [];
         btnIds.forEach(id => { let btn = document.getElementById(id); if(btn) btn.setAttribute('disabled', true); });
+        // نوێ: نیشانەیەک لەسەر خودی فۆرمەکە دادەنرێت تاکو setFormLockedVisual (سیستمی
+        // قوفڵی ڕۆژ) بزانێت ئەم فۆرمە بەشێوەیەکی سەربەخۆ لە دۆخی "بینین-تەنیا"دایە،
+        // و خانەکانی بە هەڵە چالاک نەکاتەوە (بڕوانە تێبینی سەرەکی لەناو setFormLockedVisual).
+        form.dataset.viewLocked = '1';
     }
 
     function enableFormInputs(formId) {
@@ -10156,6 +10281,7 @@ var qrcode = function() {
         inputs.forEach(el => el.removeAttribute('disabled'));
         let btnIds = LOCKABLE_BUTTONS_BY_FORM[formId] || [];
         btnIds.forEach(id => { let btn = document.getElementById(id); if(btn) btn.removeAttribute('disabled'); });
+        delete form.dataset.viewLocked;
     }
 
     function unlockForm(formId) {
@@ -11462,12 +11588,24 @@ var qrcode = function() {
         inwardVouchers.push({ voucherNo, date: dateVal, supplier, supplierInvoiceNo: '-', poNo: '-', storekeeper, items: voucherItems, curr: curr, isOpening: true });
         logAudit('create_inward_opening', 'inward', voucherNo, { mode, items: voucherItems });
 
-        await saveAndRefresh({
-            inventory: voucherItems.map(vi => inventory.find(inv => inv.code === vi.code)).filter(Boolean),
-            inward: [inwardVouchers.find(v => v.voucherNo === voucherNo)].filter(Boolean)
-        });
-        clearInwardRows();
-        alert(`📂 سەرکەوتوو بوو: بڕی ناو (${count}) ڕیز بۆ باڵانسی دەستپێک ${mode === 'REPLACE' ? 'گۆڕدران/نووسرانەوە' : 'زیادکران'} و وەک وەسڵێکی سەنەدی دەستپێک تۆمارکران، دەتوانیت لە ناو لیستی وەسڵەکاندا ببینیتەوە (لەگەڵ نرخیان کۆکراونەتەوە بۆ تێکڕای تێچووی ڕاست).`);
+        // چاککردنی هەڵەیەکی زۆر گرنگ (بێدەنگ شکستهێنان/لەدەستچوونی داتا): بڕوانە تێبینی
+        // سەرەکی لەناو syncInventoryToSupabase() و submitInwardVoucher.
+        let openingSaveFailed = false;
+        try {
+            await saveAndRefresh({
+                inventory: voucherItems.map(vi => inventory.find(inv => inv.code === vi.code)).filter(Boolean),
+                inward: [inwardVouchers.find(v => v.voucherNo === voucherNo)].filter(Boolean)
+            });
+        } catch(openingSaveErr) {
+            console.error('submit opening balance: saveAndRefresh failed', openingSaveErr);
+            openingSaveFailed = true;
+        }
+        if(openingSaveFailed) {
+            alert('❌ پاشکەوتکردنی باڵانسی دەستپێک لە سیستمی ناوەندیدا سەرکەوتوو نەبوو (کێشەی تۆڕ یان بارگرانی). داتاکەت هێشتا لەناو فۆرمەکەدایە — تکایە پەیوەندی ئینتەرنێت پشکنین بکە و دووبارە هەوڵبدەرەوە.');
+        } else {
+            clearInwardRows();
+            alert(`📂 سەرکەوتوو بوو: بڕی ناو (${count}) ڕیز بۆ باڵانسی دەستپێک ${mode === 'REPLACE' ? 'گۆڕدران/نووسرانەوە' : 'زیادکران'} و وەک وەسڵێکی سەنەدی دەستپێک تۆمارکران، دەتوانیت لە ناو لیستی وەسڵەکاندا ببینیتەوە (لەگەڵ نرخیان کۆکراونەتەوە بۆ تێکڕای تێچووی ڕاست).`);
+        }
         } finally {
             if(inOpeningBtnEl) { inOpeningBtnEl.disabled = false; inOpeningBtnEl.textContent = inOpeningBtnEl.dataset.origText || '📂 جێگیرکردن وەک سەنەدی دەستپێک'; }
         }
@@ -13094,12 +13232,29 @@ async function isDayUnlockedForModule(moduleKey, dateVal) {
 // نوێ: داخستن/کردنەوەی بینراوی فۆرمێک بەپێی دۆخی قوفڵ. کاتێک قوفڵکراوە، هەموو
 // input/select/textarea/button (جگە لە خانەی بەروار) disabled دەکرێن و بانەرێکی سووری
 // بچووک لەسەرەوەی فۆرمەکە دەردەکەوێت.
+// چاککردنی هەڵەیەکی گرنگ (قوفڵی وەسڵی کۆن خۆی-بەخۆی دەکردەوە بەبێ دوگمەی دەستکاری):
+// پێشتر ئەم فەنکشنە بۆ هەموو خانەکانی ناو شاشەکە ڕاستەوخۆ `el.disabled = isLocked`
+// دادەنا. کاتێک ڕۆژی وەسڵەکە قوفڵی ئەدمینی نەبوایە (isLocked=false، دۆخی زۆربەی کاتەکان)،
+// ئەمە بە کوێرایی هەموو خانەکانی دەکردەوە (disabled=false) — تەنانەت ئەگەر ئەو خانانە
+// پێشتر لەلایەن lockFormInputs()ـەوە قوفڵ کرابوونایه‌ بۆ "دۆخی بینین" (پێش کرتەکردن
+// لەسەر دوگمەی دەستکاری، بڕوانە editCurrentVoucher). ئەم فەنکشنە خۆکار بانگ دەکرێت
+// هەر کاتێک هەر گۆڕانکارییەکی realtime لە هەر شوێنێکی سیستمدا ڕوو بدات (بڕوانە
+// refreshAppUIAfterDataLoad) یان هەر کاتێک ئەم شاشەیە دووبارە دەکرێتەوە (بڕوانە
+// setupFormVoucherNumbers لەناو openScreen). ئەنجام: بەکارهێنەرێک کە خەریکی
+// سەیرکردنی وەسڵێکی کۆنە (بەبێ کرتەکردن لەسەر "دەستکاری")، دوای چەند چرکەیەک
+// بە بێدەنگی دەبینی دەتوانێت بنووسێت! ئێستا دۆخی قوفڵی گشتی فۆرم (form.dataset.viewLocked،
+// دانراو لەلایەن lockFormInputs/enableFormInputs) بەگشتی ڕەچاو دەکرێت: خانەکان
+// تەنها ئەگەر نەک ڕۆژی قوفڵکراوە و نەک فۆرمەکە لە دۆخی بینینی-تەنیایە چالاک دەکرێنەوە.
+const SCREEN_ID_TO_FORM_ID_FOR_LOCK = { screenInward: 'inwardForm', screenOutward: 'outwardForm', screenPR: 'prForm', screenReturn: 'returnForm' };
 function setFormLockedVisual(screenEl, dateInputEl, isLocked, moduleKey, dateVal) {
     let banner = screenEl.querySelector('.day-lock-banner');
+    let formEl = document.getElementById(SCREEN_ID_TO_FORM_ID_FOR_LOCK[screenEl.id]);
+    let formIsViewLocked = !!(formEl && formEl.dataset.viewLocked === '1');
+    let finalDisabled = isLocked || formIsViewLocked;
     screenEl.querySelectorAll('input, select, textarea, button').forEach(el => {
         if(el === dateInputEl) return;
         if(el.classList.contains('day-lock-exempt')) return;
-        el.disabled = isLocked;
+        el.disabled = finalDisabled;
     });
     if(isLocked) {
         if(!banner) {
@@ -14011,6 +14166,13 @@ async function loadAdminLog() {
     // ئەو تۆمارانەی audit_log کە خۆیان بەشێوەیەکی سروشتی جێی دەهێڵن (logAudit('delete_...'))،
     // بەبێ پێویستی بە هیچ تەیبڵ/گۆڕانکاری نوێی داتابەیس. ئەمە بۆ پشکنینی کەلێنی زنجیرەی
     // ژمارەی وەسڵ بەکاردێت (پێویستی زۆر سیستمی حسابداری/باج).
+    //
+    // نوێ (گەڕاندنەوەی وەسڵی سڕاوە/ون بووە): چونکە logAudit('delete_...') پێشتر (لەناو
+    // deleteVoucher) دۆخی تەواوی وەسڵەکە پێش سڕینەوە لەناو details.deleted هەڵدەگرێت،
+    // ئەم تۆمارە audit_log ـە خۆی بوو بە جێگرەوەی سەپلی «سەبەتەی زبڵ». ئێستا دوگمەی
+    // 🔁 گەڕاندنەوە زیادکراوە لەسەر هەر ڕیزێکی سڕاوە کە details.deleted ی هەبێت، تاکو
+    // ئەدمین بتوانێت بە یەک کرتە هەر وەسڵێکی سڕاوە (بە هەڵە یان بەقەست) بگەڕێنێتەوە،
+    // بەبێ دەستکاری کردنی deleteVoucher خۆی یان هیچ تەیبڵێکی نوێ.
     const summaryEl = document.getElementById('voidedVouchersSummary');
     if(summaryEl) {
         const deletions = (data || []).filter(l => (l.action || '').startsWith('delete_'));
@@ -14021,10 +14183,67 @@ async function loadAdminLog() {
                 const typeLabel = MODULE_LABELS[l.module] || l.module || '-';
                 const by = escapeHtml(l.user_email || '-');
                 const when = new Date(l.created_at).toLocaleString('en-GB');
-                return `<li>وەسڵی ژمارە <b>${escapeHtml(String(l.record_id))}</b> (${typeLabel}) — سڕدراوەتەوە لەلایەن ${by} لە ${when}</li>`;
+                const typeCode = (l.module || '').toUpperCase();
+                const deletedData = l.details && l.details.deleted;
+                let recoverBtn = '';
+                if(deletedData && ['IN','OUT','PR','RET'].includes(typeCode)) {
+                    auditDeletionCache[l.id] = { type: typeCode, vNo: l.record_id, deletedData };
+                    recoverBtn = ` <button onclick="recoverDeletedVoucher(${l.id})" style="background:#2ecc71; color:#fff; border:none; border-radius:4px; padding:2px 8px; font-size:11px; cursor:pointer;">🔁 گەڕاندنەوە</button>`;
+                }
+                return `<li>وەسڵی ژمارە <b>${escapeHtml(String(l.record_id))}</b> (${typeLabel}) — سڕدراوەتەوە لەلایەن ${by} لە ${when}${recoverBtn}</li>`;
             }).join('');
             summaryEl.innerHTML = `⚠️ <b>${deletions.length}</b> ژمارەی وەسڵ سڕدراونەتەوە (کەلێن لە زنجیرەی ژمارە — بۆ پشکنینی دارایی/باج): <ul style="margin:6px 0 0 0; padding-inline-start:18px;">${rows}</ul>`;
         }
+    }
+}
+
+// نوێ: کاشی کاتی (logId -> {type, vNo, deletedData}) بۆ پاڵپشتی دوگمەی گەڕاندنەوە
+// لەناو loadAdminLog()، تاکو پێویست نەبێت هەموو داتای وەسڵە سڕاوەکان لەناو خودی
+// HTML ـدا هەڵبگیرێت (کاتێک بۆ نموونە کاراکتەری تایبەت لەناو داتاکەدا هەبێت).
+let auditDeletionCache = {};
+
+// نوێ: گەڕاندنەوەی وەسڵێکی سڕاوە/ون بووە، لەسەر بنەمای دۆخی هەڵگیراوی ئەو وەسڵە لەناو
+// audit_log (بڕوانە تێبینی سەرەکی لەناو loadAdminLog). ئەم فەنکشنە deleteVoucher() یان
+// هیچ فەنکشنێکی تری بوونی خۆی دەستکاری ناکات — تەنها وەسڵەکە بۆ ئەرەی ناوخۆیی و Supabase
+// دووبارە زیاد دەکاتەوە، وەک ئەوەی هەرگیز نەسڕدرابێتەوە.
+async function recoverDeletedVoucher(logId) {
+    let entry = auditDeletionCache[logId];
+    if(!entry || !entry.deletedData) { alert('❌ زانیاری تەواوی ئەم وەسڵە بۆ گەڕاندنەوە بەردەست نییە.'); return; }
+    const { type, vNo, deletedData } = entry;
+
+    const modKey = VOUCHER_TYPE_MODULE_MAP[type] || type;
+    if(!hasPerm(modKey, 'edit')) { denyPermission('گەڕاندنەوەی وەسڵی سڕاوە'); return; }
+
+    const arrGetters = { IN: () => inwardVouchers, OUT: () => outwardVouchers, PR: () => prVouchers, RET: () => returnVouchers };
+    let getArr = arrGetters[type];
+    if(!getArr) { alert('❌ جۆری وەسڵ ناسراو نییە بۆ گەڕاندنەوە.'); return; }
+    if(getArr().some(v => v.voucherNo === vNo)) {
+        alert(`⚠️ وەسڵی ژمارە (${vNo}) پێشتر لەناو سیستمدا هەیە (لەوانەیە پێشتر گەڕاوەتەوە یان دووبارە بە دەستی دروستکرابێت). ناتوانرێت دووبارە زیاد بکرێت.`);
+        return;
+    }
+    if(!confirm(`ئایا دڵنیایت لە گەڕاندنەوەی وەسڵی ژمارە (${vNo})؟ کاڵا/بڕەکانی ئەم وەسڵە دووبارە کاریگەری خۆیان لەسەر باڵانسی کۆگا دەبێت، وەک ئەوەی هەرگیز نەسڕدرابێتەوە.\n\n⚠️ تێبینی: ئەگەر ئەم وەسڵە (وەسڵی ڕۆشتوو) پێشتر ئامێر/سامانی لای کەسێک تۆمار کردبووایە، ئەو تۆمارە بە شێوەیەکی خۆکار ناگەڕێتەوە — پێویستە بە دەستی لە بەشی «ئامێرەکانی لای کەسەکان» زیاد بکرێتەوە ئەگەر پێویست بوو.`)) return;
+
+    getArr().push(deletedData);
+
+    let recoverSaveFailed = false;
+    try {
+        if(type === 'IN') await syncInwardToSupabase([deletedData]);
+        if(type === 'OUT') await syncOutwardToSupabase([deletedData]);
+        if(type === 'PR') await syncPRToSupabase([deletedData]);
+        if(type === 'RET') await syncReturnToSupabase([deletedData]);
+        if(type === 'IN' && deletedData.poNo && deletedData.poNo !== '-') recalculatePRReceivedQty(deletedData.poNo);
+        logAudit('restore_' + type.toLowerCase(), type.toLowerCase(), vNo, { restored: deletedData });
+        await saveAndRefresh();
+    } catch(recErr) {
+        console.error('recoverDeletedVoucher failed', recErr);
+        recoverSaveFailed = true;
+    }
+
+    if(recoverSaveFailed) {
+        alert(`❌ گەڕاندنەوەی وەسڵی ژمارە (${vNo}) سەرکەوتوو نەبوو لە پاشکەوتکردنی سیستمی ناوەندیدا (کێشەی تۆڕ یان بارگرانی). تکایە پەیوەندی ئینتەرنێت پشکنین بکە و دووبارە هەوڵبدەرەوە.`);
+    } else {
+        alert(`✅ وەسڵی ژمارە (${vNo}) بە سەرکەوتوویی گەڕێندرایەوە.`);
+        if(typeof loadAdminLog === 'function') loadAdminLog();
     }
 }
 
@@ -14153,7 +14372,19 @@ async function syncInventoryToSupabase(specificItems) {
             const { error } = await sb.from('inventory').upsert(dedupeByKey(itemsToSync, x => x.code).map(invToDb), { onConflict: 'code' });
             if(error) throw error;
         }
-    } catch(e) { console.error('sync inventory failed', e); alert('⚠️ هەڵە لە هاوکاتکردنی کاڵا لەگەڵ Supabase: ' + e.message); }
+    } catch(e) {
+        console.error('sync inventory failed', e);
+        alert('⚠️ هەڵە لە هاوکاتکردنی کاڵا لەگەڵ Supabase: ' + e.message);
+        // چاککردنی هەڵەیەکی زۆر گرنگی (بێدەنگ شکستهێنان/لەدەستچوونی داتا): پێشتر ئەم
+        // هەڵەیە لێرە بە تەواوی «قوت» دەبرا — ئاگاداریەک پیشان دەدرا بەڵام فەنکشنەکە بە
+        // ئاسایی دەگەڕایەوە، بۆیە saveAndRefresh() و فەنکشنەکانی پاشکەوتکردن (submitInwardVoucher
+        // و هاوشێوەکانی) هەرگیز نەیاندەزانی شکستی هێناوە، بۆیە هەمیشە پەیامی "سەرکەوتوو" دەدا و
+        // فۆرمەکەیان دەسڕییەوە تەنانەت کاتێک هیچ نەچووبووە بۆ Supabase (بۆ نموونە لەژێر بارگرانی
+        // یان تۆڕی هێواش). ئێستا هەڵەکە دووبارە throw دەکرێت تاکو فەنکشنە بانگکەرەکان بتوانن
+        // پێشوەخت هەستپێبکەن و داتای بەکارهێنەر لەناو فۆرمدا بهێڵنەوە (بڕوانە تێبینی هاوشێوە
+        // لەناو submitInwardVoucher/submitOutwardVoucher/submitPRVoucher/submitReturnVoucher).
+        throw e;
+    }
 }
 
 // یارمەتیدەر: سڕینەوەی ڕاستەقینەی تاکە کاڵایەک لە Supabase کاتێک بە تەواوی لە کۆگا
@@ -14197,7 +14428,12 @@ async function syncInwardToSupabase(specificVouchers) {
                 } else throw error;
             }
         }
-    } catch(e) { console.error('sync inward failed', e); alert('⚠️ هەڵە لە هاوکاتکردنی وەسڵی هاتن: ' + e.message); }
+    } catch(e) {
+        console.error('sync inward failed', e);
+        alert('⚠️ هەڵە لە هاوکاتکردنی وەسڵی هاتن: ' + e.message);
+        // چاککردنی هەڵە (بێدەنگ شکستهێنان): بڕوانە تێبینی سەرەکی لەناو syncInventoryToSupabase().
+        throw e;
+    }
 }
 
 // ---- وەسڵی دەرچوون ----
@@ -14218,7 +14454,12 @@ async function syncOutwardToSupabase(specificVouchers) {
             const { error } = await sb.from('outward_vouchers').upsert(dedupeByKey(vouchersToSync, x => x.voucherNo).map(outwardToDb), { onConflict: 'voucher_no' });
             if(error) throw error;
         }
-    } catch(e) { console.error('sync outward failed', e); alert('⚠️ هەڵە لە هاوکاتکردنی وەسڵی دەرچوون: ' + e.message); }
+    } catch(e) {
+        console.error('sync outward failed', e);
+        alert('⚠️ هەڵە لە هاوکاتکردنی وەسڵی دەرچوون: ' + e.message);
+        // چاککردنی هەڵە (بێدەنگ شکستهێنان): بڕوانە تێبینی سەرەکی لەناو syncInventoryToSupabase().
+        throw e;
+    }
 }
 
 // ---- داواکاری کڕین ----
@@ -14243,7 +14484,12 @@ async function syncPRToSupabase(specificVouchers) {
             const { error } = await sb.from('pr_vouchers').upsert(dedupeByKey(vouchersToSync, x => x.voucherNo).map(prToDb), { onConflict: 'voucher_no' });
             if(error) throw error;
         }
-    } catch(e) { console.error('sync pr failed', e); alert('⚠️ هەڵە لە هاوکاتکردنی داواکاری کڕین: ' + e.message); }
+    } catch(e) {
+        console.error('sync pr failed', e);
+        alert('⚠️ هەڵە لە هاوکاتکردنی داواکاری کڕین: ' + e.message);
+        // چاککردنی هەڵە (بێدەنگ شکستهێنان): بڕوانە تێبینی سەرەکی لەناو syncInventoryToSupabase().
+        throw e;
+    }
 }
 
 // ---- گەڕانەوەکان ----
@@ -14262,7 +14508,12 @@ async function syncReturnToSupabase(specificVouchers) {
             const { error } = await sb.from('return_vouchers').upsert(dedupeByKey(vouchersToSync, x => x.voucherNo).map(returnToDb), { onConflict: 'voucher_no' });
             if(error) throw error;
         }
-    } catch(e) { console.error('sync return failed', e); alert('⚠️ هەڵە لە هاوکاتکردنی گەڕانەوە: ' + e.message); }
+    } catch(e) {
+        console.error('sync return failed', e);
+        alert('⚠️ هەڵە لە هاوکاتکردنی گەڕانەوە: ' + e.message);
+        // چاککردنی هەڵە (بێدەنگ شکستهێنان): بڕوانە تێبینی سەرەکی لەناو syncInventoryToSupabase().
+        throw e;
+    }
 }
 
 // ---- چاکسازی/ڕیکۆنسایل ----
@@ -14281,7 +14532,12 @@ async function syncAdjustmentToSupabase(specificVouchers) {
             const { error } = await sb.from('adjustment_vouchers').upsert(dedupeByKey(vouchersToSync, x => x.voucherNo).map(adjToDb), { onConflict: 'voucher_no' });
             if(error) throw error;
         }
-    } catch(e) { console.error('sync adjustment failed', e); alert('⚠️ هەڵە لە هاوکاتکردنی چاکسازی: ' + e.message); }
+    } catch(e) {
+        console.error('sync adjustment failed', e);
+        alert('⚠️ هەڵە لە هاوکاتکردنی چاکسازی: ' + e.message);
+        // چاککردنی هەڵە (بێدەنگ شکستهێنان): بڕوانە تێبینی سەرەکی لەناو syncInventoryToSupabase().
+        throw e;
+    }
 }
 async function deleteAdjustmentVoucherFromSupabase(vNo) {
     try { const { error } = await sb.from('adjustment_vouchers').delete().eq('voucher_no', vNo); if(error) throw error; }
@@ -14312,7 +14568,12 @@ async function syncCustodyToSupabase(specificRecords) {
             const { error } = await sb.from('custody_records').upsert(dedupeByKey(recordsToSync, x => x.id).map(custodyToDb), { onConflict: 'id' });
             if(error) throw error;
         }
-    } catch(e) { console.error('sync custody failed', e); alert('⚠️ هەڵە لە هاوکاتکردنی ئامێرەکانی لای کەسەکان: ' + e.message); }
+    } catch(e) {
+        console.error('sync custody failed', e);
+        alert('⚠️ هەڵە لە هاوکاتکردنی ئامێرەکانی لای کەسەکان: ' + e.message);
+        // چاککردنی هەڵە (بێدەنگ شکستهێنان): بڕوانە تێبینی سەرەکی لەناو syncInventoryToSupabase().
+        throw e;
+    }
 }
 // یارمەتیدەر: سڕینەوەی ڕاستەقینەی تاکە تۆمارێکی Custody لای Supabase (پێویست کاتێک
 // تۆمارێک بە تەواوی لە لیستی لای کلاینت لادەبرێت، بۆ نموونە کاتێک دوو تۆمار
