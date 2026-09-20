@@ -5494,6 +5494,25 @@ var qrcode = function() {
         return result;
     }
 
+    // نوێ: هەموو نەوەکانی شوێنێکی دیاریکراو (نەک تەنها کوڕە ڕاستەوخۆکانی)، بەگژتی
+    // قوڵی خۆیان لەگەڵ ئەو شوێنە (١=کوڕ، ٢=نەوە، ٣=پشیلە نەوە، ...). بۆ بەکارهێنان لە
+    // دروپداونی ژێر-شوێن لە وەسڵی ڕۆشتوو/گەڕانەوەدا، تاکو بەکارهێنەر بتوانێت هەر ئاستێکی
+    // دارستانەکە ڕاستەوخۆ لەو یەک دروپداونەدا ببینێت و هەڵیبژێرێت (بڕوانە تێبینی سەرەکی
+    // لەناو populateSubLocationSelect).
+    function getLocationDescendants(parentName) {
+        let result = [];
+        function walk(pName, depth) {
+            let children = getLocationChildren(pName).slice()
+                .sort((a, b) => a.name.localeCompare(b.name, 'ku'));
+            children.forEach(ch => {
+                result.push({ loc: ch, depth: depth });
+                walk(ch.name, depth + 1);
+            });
+        }
+        walk(parentName, 1);
+        return result;
+    }
+
     // کۆی ژمارە و بەهای هەموو ماددە کاڵاکانی گروپێک، لەگەڵ هەموو ژێر-گروپەکانی
     function getCategoryStats(id) {
         let ids = getCategoryDescendantIds(id);
@@ -6482,6 +6501,16 @@ var qrcode = function() {
     // فەنکشنێکی هاوبەش: دروپداونێکی دراوکراو بە ژێر-شوێنەکانی parentName پڕدەکاتەوە. ئەگەر
     // parentName هیچ ژێر-شوێنێکی نەبوو، دروپداونەکە ناچالاک دەکرێت (چونکە هیچ هەڵبژاردنێکی
     // واتادار نییە). preserveValue ئەگەر هێشتا لەناو ژێر-شوێنە نوێیەکاندا بوو، دەپارێزرێت.
+    //
+    // چاککردنی زیاتر (پیشاندانی هەموو دارستانەکە، نەک تەنها یەک ئاست): پێشتر تەنها کوڕە
+    // ڕاستەوخۆکانی parentName (بە getLocationChildren) پیشان دەدرا. ئەمە واتای ئەوەی دەدا
+    // ئەگەر بۆ نموونە "مەخزەنی ناوکار" هەڵبژێردرایە و "ستره‌كچه‌ر" ژێر-شوێنی خۆی هەبووایە
+    // (وەک "تاوەری دی"/"تاوەری سی")، ئەو نەوانە لەم دروپداونەدا بەتەواوی دەرناکەوتن — تەنها
+    // "ستره‌كچه‌ر" خۆی دەردەکەوت. ئێستا getLocationDescendants (هەموو ئاستەکان) بەکاردێت،
+    // لەگەڵ داشی (—) لەسەر هەر ئاستێک بۆ نیشاندانی قوڵی، تاکو بەکارهێنەر بتوانێت هەر
+    // شوێنێکی دارستانەکە — لە هەر قوڵێک بێت — ڕاستەوخۆ لەم یەک دروپداونەدا هەڵبژێرێت. نرخی
+    // هەڵبژێردراو (value) هەر ناوی خودی شوێنەکەیە وەک پێشتر، بۆیە هیچ شوێنێکی تری کۆدەکە
+    // پێویستی بە گۆڕانکاری نییە.
     function populateSubLocationSelect(selectEl, parentName) {
         if(!selectEl) return;
         // چاککردنی هەڵە: ئەم فەنکشنە پێشتر بەبێ مەرج selectEl.disabled دادەنا (true/false)
@@ -6496,8 +6525,8 @@ var qrcode = function() {
         let siblingQty = row ? (row.querySelector('.row-out-qty') || row.querySelector('.row-ret-qty')) : null;
         let rowIsLocked = siblingQty ? siblingQty.disabled : false;
         let preserveValue = selectEl.value;
-        let children = parentName ? getLocationChildren(parentName) : [];
-        if(children.length === 0) {
+        let descendants = parentName ? getLocationDescendants(parentName) : [];
+        if(descendants.length === 0) {
             selectEl.innerHTML = '<option value="">-- (بەپێی شوێنی سەرەوە) --</option>';
             selectEl.value = '';
             selectEl.disabled = true;
@@ -6507,9 +6536,9 @@ var qrcode = function() {
         selectEl.disabled = rowIsLocked;
         selectEl.title = 'ئارەزوومەندانە: ئەگەر هیچ هەڵنەبژێریت، ئەم کاڵایە بە ناوی گشتی [' + parentName + '] دادەنرێت';
         let optionsHtml = '<option value="">-- (بەپێی شوێنی سەرەوە: ' + escapeHtml(parentName) + ') --</option>' +
-            children.map(c => `<option value="${escapeHtml(c.name)}">${escapeHtml(c.name)}</option>`).join('');
+            descendants.map(d => `<option value="${escapeHtml(d.loc.name)}">${'— '.repeat(d.depth - 1)}${escapeHtml(d.loc.name)}</option>`).join('');
         selectEl.innerHTML = optionsHtml;
-        if(preserveValue && children.some(c => normalizeNameForCompare(c.name) === normalizeNameForCompare(preserveValue))) {
+        if(preserveValue && descendants.some(d => normalizeNameForCompare(d.loc.name) === normalizeNameForCompare(preserveValue))) {
             selectEl.value = preserveValue;
         }
     }
