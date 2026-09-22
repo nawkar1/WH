@@ -7198,8 +7198,18 @@ var qrcode = function() {
         let prLink = document.getElementById('inwardPrLinkSelect');
         if(prLink) prLink.value = '';
         clearInwardRows();
-        setupFormVoucherNumbers();
+        // چاککردنی هەڵە (زۆر گرنگ): پێشتر setupFormVoucherNumbers() پێش دانانی
+        // currentVoucherIndex['IN']=-1 بانگ دەکرا. لەبەر ئەوەی setupFormVoucherNumbers()
+        // تەنها ژمارەی وەسڵ نوێ دەکاتەوە ئەگەر currentVoucherIndex[type] پێشتر -1 بێت،
+        // خانەی ژمارەی وەسڵ بە هەڵە هەر بە ژمارەی وەسڵی پێشووتر دەمایەوە (کە هێشتا لەناو
+        // خانەکەدا بوو لە کاتی دەستکاریکردنی وەسڵێکی کۆن)، تەنانەت دوای کرتەکردن لەسەر
+        // "🆕 وەسڵی نوێ". ئەنجام: کاتێک دواتر پاشکەوتت دەکرد، سیستمەکە بە هەڵە وەک
+        // دەستکاریکردنی هەمان وەسڵی کۆن مامەڵەی لەگەڵ دەکرد (چونکە ژمارەکە هێشتا هەمانە)،
+        // نەک دروستکردنی وەسڵێکی تەواو نوێ. ئێستا currentVoucherIndex['IN']=-1 پێش
+        // بانگکردنی setupFormVoucherNumbers() دادەنرێت تاکو خانەی ژمارەی وەسڵ بەڕاستی
+        // نوێ بکرێتەوە.
         currentVoucherIndex['IN'] = -1;
+        setupFormVoucherNumbers();
         updateVoucherPositionLabel('IN', inwardVouchers);
         renderVoucherAttachmentPreview('IN');
         document.getElementById('inSupplier').focus();
@@ -7215,8 +7225,9 @@ var qrcode = function() {
         document.getElementById('outRequestedBy').value = '';
         document.getElementById('outAuthorizedBy').value = '';
         clearOutwardRows();
-        setupFormVoucherNumbers();
+        // چاککردنی هەڵە (زۆر گرنگ): بڕوانە هەمان تێبینی لەناو resetInwardFormForNewEntry().
         currentVoucherIndex['OUT'] = -1;
+        setupFormVoucherNumbers();
         updateVoucherPositionLabel('OUT', outwardVouchers);
         renderVoucherAttachmentPreview('OUT');
     }
@@ -7227,8 +7238,9 @@ var qrcode = function() {
         document.getElementById('prStatusSelect').value = 'PENDING';
         document.getElementById('prSupplier').value = '';
         clearPRRows();
-        setupFormVoucherNumbers();
+        // چاککردنی هەڵە (زۆر گرنگ): بڕوانە هەمان تێبینی لەناو resetInwardFormForNewEntry().
         currentVoucherIndex['PR'] = -1;
+        setupFormVoucherNumbers();
         updateVoucherPositionLabel('PR', prVouchers);
         renderVoucherAttachmentPreview('PR');
     }
@@ -7238,8 +7250,9 @@ var qrcode = function() {
         document.getElementById('retType').value = 'FROM_SITE';
         document.getElementById('retLocation').value = '';
         clearReturnRows();
-        setupFormVoucherNumbers();
+        // چاککردنی هەڵە (زۆر گرنگ): بڕوانە هەمان تێبینی لەناو resetInwardFormForNewEntry().
         currentVoucherIndex['RET'] = -1;
+        setupFormVoucherNumbers();
         updateVoucherPositionLabel('RET', returnVouchers);
         renderVoucherAttachmentPreview('RET');
         // چاککردنی هەڵە: دڵنیابوونەوە لەوەی datalist ی خانەی سایت/دابینکەر لەگەڵ جۆری
