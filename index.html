@@ -8482,10 +8482,17 @@ var qrcode = function() {
         // بەهەر هۆیەکەوە دوایین وەسڵی پاشکەوتکراو هاوتا بووایە لەگەڵ nextVoucherNo، ئەم
         // بەراوردە بە هەڵە true دەدایەوە کاتێک دووبارە دەستکاری دەکرا، وا لێدەکرد وەسڵێکی
         // نوێی زیادەیی (بە هەمان ماددەکان) دروست بکرێت لەجیاتی نوێکردنەوەی وەسڵی کۆن.
-        // ئێستا پشکنین لەسەر داتای ڕاستەقینە دەکرێت: ئایا وەسڵێک بەم ژمارەیە پێشتر لەناو
-        // لیستی هەڵگیراودا هەیە؟ ئەم پشکنینە هەرگیز ناتوانرێت هەڵبخەڵەتێت، چونکە پشتی بە
-        // خودی داتاکان دەبەستێت نەک بە ژمارەیەکی کاش کراو.
-        if(!inwardVouchers.some(v => v.voucherNo === voucherNo)) {
+        //
+        // چاککردنی سێیەم (گرنگترین): پشکنین لەسەر بوونی وەسڵ بە خۆیشی تەواو ورد نییە.
+        // خانەی ژمارەی وەسڵ لە فۆرمی «وەسڵی نوێ»دا هەندێک جار بە هەڵەیەکی جیاواز (بڕوانە
+        // چاککردنەکەی resetInwardFormForNewEntry) هەر بە ژمارەی دوایین وەسڵی پاشکەوتکراو
+        // دەمایەوە — کە بەخۆیشی لەناو inwardVouchers هەیە! ئەو کاتە ئەم پشکنینە بە هەڵە
+        // بڕیاری دەدا "ئەمە دەستکاریکردنی وەسڵێکی کۆنە" لەکاتێکدا بەکارهێنەر بەڕاستی
+        // فۆرمی وەسڵی نوێی کردبووەوە. ئێستا currentVoucherIndex.IN بەکاردێت — ئەمە
+        // ڕاستەوخۆ نیازی بەکارهێنەر دەردەبڕێت (١-‌ی واتای وەسڵی نوێیە، بڕوانە
+        // resetInwardFormForNewEntry/editCurrentVoucher)، بۆیە هەرگیز بە هەڵەی ژمارەی
+        // هاوتا سەرلێناشێوێت.
+        if(currentVoucherIndex.IN === -1) {
             try {
                 const { data: freshNo, error: cErr } = await sb.rpc('get_next_counter', { p_key: 'nextVoucherNo' });
                 // چاککردنی هەڵە: فەنکشنی get_next_counter لە سێرڤەرەوە یەکەم جار ژمارەکە
@@ -8909,8 +8916,12 @@ var qrcode = function() {
         // چاککردنی هەڵە (Race condition): بڕوانە هەمان تێبینی درێژی لەناو submitInwardVoucher()
         // — پشکنین ئێستا لەسەر بوونی ڕاستەقینەی وەسڵ لەناو لیستدا دەکرێت، نەک بەراوردکردن
         // لەگەڵ nextOutVoucherNo‌ی کاش کراو.
+        // چاککردنی هەڵە: بڕوانە تێبینی سەرەکی لەناو submitInwardVoucher() —
+        // currentVoucherIndex.OUT بەکاردێت (نەک بوونی هاوتای ژمارە)، تاکو ئەگەر خانەی
+        // ژمارەی وەسڵ بە هەڵەیەکی جیاواز هەر بە ژمارەی وەسڵی پێشوو مابێتەوە، بەهەڵە وەک
+        // دەستکاریکردنی وەسڵی کۆن لێی مامەڵە نەکرێت.
         let voucherNoBeforeRenumber = voucherNo;
-        if(!outwardVouchers.some(v => v.voucherNo === voucherNo)) {
+        if(currentVoucherIndex.OUT === -1) {
             try {
                 const { data: freshNo, error: cErr } = await sb.rpc('get_next_counter', { p_key: 'nextOutVoucherNo' });
                 // چاککردنی هەڵە: بڕوانە تێبینی سەرەکی و درێژی لەناو submitInwardVoucher()
@@ -9123,9 +9134,9 @@ var qrcode = function() {
         }
         
         // چاککردنی هەڵە (Race condition): بڕوانە هەمان تێبینی درێژی لەناو submitInwardVoucher()
-        // — پشکنین ئێستا لەسەر بوونی ڕاستەقینەی وەسڵ لەناو لیستدا دەکرێت.
+        // — currentVoucherIndex.PR بەکاردێت (نەک بوونی هاوتای ژمارە).
         let voucherNoBeforeRenumber = voucherNo;
-        if(!prVouchers.some(v => v.voucherNo === voucherNo)) {
+        if(currentVoucherIndex.PR === -1) {
             try {
                 const { data: freshNo, error: cErr } = await sb.rpc('get_next_counter', { p_key: 'nextPRVoucherNo' });
                 // چاککردنی هەڵە: بڕوانە تێبینی سەرەکی و درێژی لەناو submitInwardVoucher()
@@ -9385,9 +9396,9 @@ var qrcode = function() {
             }
         }
         // چاککردنی هەڵە (Race condition): بڕوانە هەمان تێبینی درێژی لەناو submitInwardVoucher()
-        // — پشکنین ئێستا لەسەر بوونی ڕاستەقینەی وەسڵ لەناو لیستدا دەکرێت.
+        // — currentVoucherIndex.RET بەکاردێت (نەک بوونی هاوتای ژمارە).
         let voucherNoBeforeRenumber = voucherNo;
-        if(!returnVouchers.some(v => v.voucherNo === voucherNo)) {
+        if(currentVoucherIndex.RET === -1) {
             try {
                 const { data: freshNo, error: cErr } = await sb.rpc('get_next_counter', { p_key: 'nextReturnVoucherNo' });
                 // چاککردنی هەڵە: بڕوانە تێبینی سەرەکی و درێژی لەناو submitInwardVoucher()
