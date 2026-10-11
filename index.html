@@ -1753,6 +1753,12 @@
                         <option value="ALL">هەموو گروپەکان</option>
                     </select>
                     <input type="text" id="stocktakeFilterSearch" placeholder="گەڕان بە کۆد یان ناوی کاڵا..." style="width: auto; flex-grow:1; margin-bottom:0;">
+                    <!-- نوێ: کاتێک چالاککرا، تەنها کاڵایانێک دەهێنرێت کە باڵانسی سیستمیان لە سفر
+                         زیاترە — بۆ ئەوەی کاڵای بەتاڵ (کە هیچ شتێکیان نییە) پڕ نەکەنەوە لیستی جەرد. -->
+                    <label style="display:flex; align-items:center; gap:4px; margin-bottom:0; white-space:nowrap;">
+                        <input type="checkbox" id="stocktakeFilterNonZero" style="width:auto; margin:0;">
+                        تەنها کاڵای باڵانسی هەیە
+                    </label>
                 </div>
                 <div style="margin-bottom: 10px;">
                     <button type="button" class="btn-purple" onclick="loadStocktakeItems()">🔄 هێنانی ماددەکان بۆ جەرد</button>
@@ -11355,6 +11361,8 @@ var qrcode = function() {
         let catFilter = document.getElementById('stocktakeFilterCategory').value;
         let catFilterIds = (catFilter === 'ALL') ? null : getCategoryDescendantIds(catFilter);
         let searchKey = document.getElementById('stocktakeFilterSearch').value.toLowerCase().trim();
+        // نوێ: فلتەری «تەنها کاڵای باڵانسی هەیە» — کاڵای باڵانسیان سفر یان نەرێنی لادەبات.
+        let nonZeroOnly = document.getElementById('stocktakeFilterNonZero').checked;
 
         // نوێ (چاککردنی کارایی): پێشتر هیچ سنوورێک نەبوو بۆ ژمارەی کاڵایانەی پێکەوە
         // بار دەکران — کاتێک هیچ فلتەرێکی گروپ/گەڕان بەکارنەهێنرا، هەموو کاڵاکانی
@@ -11368,7 +11376,8 @@ var qrcode = function() {
         let matchedItemsCount = inventory.filter(item => {
             let categoryMatch = (catFilter === 'ALL' || catFilterIds.includes(item.category));
             let searchMatch = (searchKey === '' || item.code.toLowerCase().includes(searchKey) || item.name.toLowerCase().includes(searchKey));
-            return categoryMatch && searchMatch;
+            let balanceMatch = (!nonZeroOnly || (item.balance || 0) > 0);
+            return categoryMatch && searchMatch && balanceMatch;
         }).length;
         if(matchedItemsCount > STOCKTAKE_LARGE_LOAD_WARN_THRESHOLD && catFilter === 'ALL' && searchKey === '') {
             if(!confirm(`⚠️ ئاگاداری کارایی: ${matchedItemsCount} کاڵا دەگونجێن بەبێ هیچ فلتەرێک. هێنانی هەموویان پێکەوە دەتوانێت وێبگەڕەکەت بۆ ماوەیەک هێواش بکات.\n\nپێشنیار دەکرێت لای سەرەوە گروپێک هەڵبژێریت بۆ ئەوەی جەردەکە بەشێک بەشێک و ئاسانتر ئەنجام بدرێت.\n\nئایا هێشتا دەتەوێت هەموو ${matchedItemsCount} کاڵاکە پێکەوە بار بکەیت؟`)) return;
@@ -11386,7 +11395,8 @@ var qrcode = function() {
         inventory.forEach(item => {
             let categoryMatch = (catFilter === 'ALL' || catFilterIds.includes(item.category));
             let searchMatch = (searchKey === '' || item.code.toLowerCase().includes(searchKey) || item.name.toLowerCase().includes(searchKey));
-            if(!categoryMatch || !searchMatch) return;
+            let balanceMatch = (!nonZeroOnly || (item.balance || 0) > 0);
+            if(!categoryMatch || !searchMatch || !balanceMatch) return;
 
             let inactiveTag = (item.active === false) ? ' <span style="color:#c0392b; font-weight:bold;">(ناچالاک)</span>' : '';
             // چاککردنی هەڵە: پێشتر خانەی "ڕاستەقینە" پێشوەخت بە بڕی سیستم پڕدەکرایەوە، کە
