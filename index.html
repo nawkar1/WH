@@ -1764,6 +1764,18 @@
                     <button type="button" class="btn-purple" onclick="loadStocktakeItems()">🔄 هێنانی ماددەکان بۆ جەرد</button>
                     <button type="button" class="btn-primary-action" id="stocktakePostBtn" onclick="postStocktakeAdjustments()">⚙️ جێگیرکردنی جەرد (Post Adjustments)</button>
                     <button type="button" class="btn-print" onclick="printScreenArea('stocktakePrintArea', 'فۆرمی جەردی دەوری کۆگا')">🖨️ پرینت کردنی جەرد</button>
+                    <!-- نوێ: دوگمەی بینینی جەردە پێشووەکان — هەمان خشتەی جەرد (سیستم، ژمێردراو، جیاوازی)
+                         وەک ئەوەی لە کاتی پاشکەوتکردندا بوو پیشان دەدات، بۆ بەراوردکردن لەگەڵ وەرەقەکان. -->
+                    <button type="button" class="btn-secondary" onclick="toggleStocktakeHistory()">📜 جەردەکانی پێشوو</button>
+                </div>
+                <div id="stocktakeHistoryPanel" style="display:none; margin:10px 0 15px; padding:12px; border:2px solid #16a085; border-radius:6px; background:#f4fbf9;">
+                    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:10px;">
+                        <strong>📜 جەردەکانی پێشوو:</strong>
+                        <select id="stocktakeHistorySelect" onchange="renderStocktakeHistory()" style="width:auto; margin-bottom:0;"></select>
+                        <button type="button" class="btn-print" onclick="printScreenArea('stocktakeHistoryPrintArea', 'جەردی کۆگا (پێشوو)')">🖨️ پرینت</button>
+                        <button type="button" class="btn-secondary" onclick="toggleStocktakeHistory()">✖ داخستن</button>
+                    </div>
+                    <div id="stocktakeHistoryPrintArea"></div>
                 </div>
                 <!-- نوێ: پێشتر ئەم فۆرمە هیچ واژووێکی نەبوو — لەکاتێکدا لە ڕاستیدا لەهەموو
                      فۆرمەکانی تر گرنگترە، چونکە بڕی کاڵا بەدەستی دەگۆڕدرێت. ئێستا خشتەکە و
@@ -9480,6 +9492,10 @@ var qrcode = function() {
 
         let adjItems = [];
         let skippedNotCounted = 0;
+        // نوێ: هەموو ڕیزە ژمێردراوەکان (تەنانەت ئەوانەی جیاوازییان نییە) لەگەڵ بڕی سیستم و بڕی
+        // ژمێردراو هەڵدەگیرێن، تاکو دواتر بتوانرێت هەمان خشتەی جەرد ببینرێتەوە و لەگەڵ وەرەقەکان
+        // بەراورد بکرێت (بڕوانە toggleStocktakeHistory). پێشتر تەنها جیاوازی هەڵدەگیرا.
+        let sheetRows = [];
         for(let i=0; i<rows.length; i++) {
             let code = rows[i].children[0].textContent;
             let sysQty = parseFloat(rows[i].children[2].textContent) || 0;
@@ -9495,6 +9511,21 @@ var qrcode = function() {
             let factor = uomSel ? (parseFloat(uomSel.options[uomSel.selectedIndex]?.getAttribute('data-factor')) || 1) : 1;
             let realQtyInBase = (parseFloat(realInput.value) || 0) * factor;
             let diff = realQtyInBase - sysQty;
+
+            {
+                let sheetItem = inventory.find(inv => inv.code === code);
+                sheetRows.push({
+                    code: code,
+                    name: sheetItem ? sheetItem.name : rows[i].children[1].textContent.trim(),
+                    uom: sheetItem ? (sheetItem.uom || '') : '',
+                    enteredQty: parseFloat(realInput.value) || 0,
+                    enteredUom: uomSel ? (uomSel.options[uomSel.selectedIndex]?.text || '') : '',
+                    factor: factor,
+                    real: realQtyInBase,
+                    sys: sysQty,
+                    diff: diff
+                });
+            }
 
             if(diff !== 0) {
                 let item = inventory.find(inv => inv.code === code);
@@ -9576,6 +9607,17 @@ var qrcode = function() {
         }
         if(adjItems.length === 0) { alert('دوای تازەکردنەوە، ئیتر هیچ جیاوازییەک نەماوە بۆ جێگیرکردن.'); return; }
 
+        // نوێ: بڕی سیستمی هەموو ڕیزە ژمێردراوەکان دوای تازەکردنەوەی کۆتایی نوێ دەکرێتەوە (هەمان
+        // بنەمای ئەوەی بۆ adjItems کرا)، و diff لەگەڵ posted (ئەوەی ڕاستەقینە لەناو وەسڵەکەدا
+        // تۆمارکراوە) هەڵدەگیرێت، تاکو خشتەی هەڵگیراو لەگەڵ باڵانسی کۆگا بەیەک بگەن.
+        sheetRows.forEach(sr => {
+            let freshBal = calculateItemMetrics(sr.code).balance || 0;
+            sr.sys = Math.round(freshBal * 1e6) / 1e6;
+            sr.diff = Math.round((sr.real - sr.sys) * 1e6) / 1e6;
+            let postedLine = adjItems.find(ai => ai.code === sr.code);
+            sr.posted = postedLine ? postedLine.qty : 0;
+        });
+
         // چاککردنی هەڵە (Race condition): بڕوانە هەمان تێبینی لەناو submitInwardVoucher().
         let adjNo = "ADJ-" + nextAdjVoucherNo;
         try {
@@ -9584,7 +9626,7 @@ var qrcode = function() {
             // (هەمان کێشەی nextVoucherNo=freshNo).
             if(!cErr && freshNo) { adjNo = "ADJ-" + freshNo; nextAdjVoucherNo = freshNo; }
         } catch(e) { console.error('atomic counter fetch failed, using local number', e); }
-        adjustmentVouchers.push({ voucherNo: adjNo, date: getLocalDateTimeString(), items: adjItems.map(({_staleSysQty, ...rest}) => rest) });
+        adjustmentVouchers.push({ voucherNo: adjNo, date: getLocalDateTimeString(), items: adjItems.map(({_staleSysQty, ...rest}) => rest), sheet: sheetRows });
         // چاککردنی هەڵە (کۆنترۆڵی دارایی): بڕوانە هەمان تێبینی لەناو submitInwardVoucher().
         logAudit('create_adjustment', 'adjustment', adjNo, { source: 'stocktake', items: adjItems });
         // چاککردنی هەڵەیەکی زۆر گرنگ (بێدەنگ شکستهێنان/لەدەستچوونی داتا): بڕوانە تێبینی
@@ -11466,6 +11508,64 @@ var qrcode = function() {
         row.querySelector('.adj-diff-cell').textContent = diffVal;
     }
 
+
+    // ---- نوێ: بینینەوەی جەردە پێشووەکان ----
+    // لە ئێستاوە هەر جەردێک پاشکەوت دەکرێت، خشتەکەی (بڕی سیستم، بڕی ژمێردراو، جیاوازی) لەگەڵ
+    // وەسڵی ADJ هەڵدەگیرێت (v.sheet). ئەم بەشە دەتوانێت هەر جەردێکی پێشوو هەڵبژێرێت و هەمان
+    // خشتە پیشان بدات، لەگەڵ ستوونێکی بەتاڵ بۆ بەراوردکردن لەگەڵ وەرەقە. ئەو جەردانەی پێش ئەم
+    // تایبەتمەندییە پاشکەوت کراون (sheetیان نییە) تەنها جیاوازییەکانیان پیشان دەدرێت.
+    function toggleStocktakeHistory() {
+        let panel = document.getElementById('stocktakeHistoryPanel');
+        if(!panel) return;
+        if(panel.style.display === 'none' || panel.style.display === '') {
+            let list = adjustmentVouchers.slice().sort((a, b) => String(b.date).localeCompare(String(a.date)));
+            if(list.length === 0) { alert('هیچ جەردێک هێشتا پاشکەوت نەکراوە.'); return; }
+            let sel = document.getElementById('stocktakeHistorySelect');
+            sel.innerHTML = list.map(v => {
+                let cnt = (v.sheet && v.sheet.length) ? v.sheet.length : (v.items || []).length;
+                return `<option value="${escapeHtml(v.voucherNo)}">${escapeHtml(v.voucherNo)} — ${escapeHtml(String(v.date).slice(0, 16).replace('T', ' '))} — ${cnt} کاڵا</option>`;
+            }).join('');
+            panel.style.display = 'block';
+            renderStocktakeHistory();
+        } else {
+            panel.style.display = 'none';
+        }
+    }
+
+    function renderStocktakeHistory() {
+        let area = document.getElementById('stocktakeHistoryPrintArea');
+        let vNo = document.getElementById('stocktakeHistorySelect').value;
+        let v = adjustmentVouchers.find(x => x.voucherNo === vNo);
+        if(!v) { area.innerHTML = ''; return; }
+        const fmt = n => (Math.round((parseFloat(n) || 0) * 100) / 100).toLocaleString('en-US');
+        const diffStyle = d => d > 0 ? 'color:#27ae60; font-weight:bold;' : (d < 0 ? 'color:#c0392b; font-weight:bold;' : '');
+        let dateTxt = escapeHtml(String(v.date).slice(0, 16).replace('T', ' '));
+        let html = `<h3 style="margin:0 0 6px;">جەردی کۆگا — ${escapeHtml(v.voucherNo)}</h3><div style="margin-bottom:8px; font-size:13px;">بەروار: ${dateTxt}</div>`;
+        if(v.sheet && v.sheet.length) {
+            let diffCount = v.sheet.filter(r => Math.abs(parseFloat(r.diff) || 0) > 1e-9).length;
+            if(v.sheet.some(r => r.estimated)) {
+                html += `<div style="background:#fff3cd; border:1px solid #f0ad4e; padding:6px 10px; border-radius:4px; margin-bottom:8px; font-size:13px;">⚠️ ئەم جەردە پێش دروستکردنی ئەم تایبەتمەندییە پاشکەوت کراوە، بۆیە بڕی سیستم و بڕی ژمێردراو <b>مەزەندەن</b> (لە داتاکانی ئەو کاتەوە دووبارە حیساب کراون). جیاوازییەکە (ستوونی «جیاوازی») ڕاستە.</div>`;
+            }
+            html += `<table style="width:100%;"><thead><tr><th>#</th><th>کۆد</th><th>ناوی کاڵا</th><th>یەکە</th><th>بڕی سیستم</th><th>ژمێردراو (وەک نووسراوە)</th><th>ژمێردراو (یەکەی بنەڕەت)</th><th>جیاوازی</th><th style="min-width:90px;">لەسەر وەرەقە</th></tr></thead><tbody>`;
+            v.sheet.forEach((r, i) => {
+                let d = parseFloat(r.diff) || 0;
+                let enteredTxt = (r.enteredUom && parseFloat(r.factor) && parseFloat(r.factor) !== 1)
+                    ? `${fmt(r.enteredQty)} ${escapeHtml(r.enteredUom)}`
+                    : fmt(r.enteredQty !== undefined ? r.enteredQty : r.real);
+                html += `<tr><td>${i + 1}</td><td>${escapeHtml(r.code)}</td><td>${escapeHtml(r.name)}</td><td>${escapeHtml(r.uom || '')}</td><td>${fmt(r.sys)}</td><td>${enteredTxt}</td><td>${fmt(r.real)}</td><td style="${diffStyle(d)}">${d > 0 ? '+' : ''}${fmt(d)}</td><td></td></tr>`;
+            });
+            html += `</tbody></table><div style="margin-top:8px; font-size:13px;">ژمارەی کاڵای ژمێردراو: <b>${v.sheet.length}</b> — ئەوانەی جیاوازییان هەیە: <b>${diffCount}</b></div>`;
+        } else {
+            html += `<div style="background:#fff3cd; border:1px solid #f0ad4e; padding:6px 10px; border-radius:4px; margin-bottom:8px; font-size:13px;">ℹ️ ئەم جەردە پێش دروستکردنی ئەم تایبەتمەندییە پاشکەوت کراوە، بۆیە تەنها جیاوازییەکانی هەیە (بڕی سیستم و بڕی ژمێردراو هەڵنەگیراون).</div>`;
+            html += `<table style="width:100%;"><thead><tr><th>#</th><th>کۆد</th><th>ناوی کاڵا</th><th>جیاوازی</th><th style="min-width:90px;">لەسەر وەرەقە</th></tr></thead><tbody>`;
+            (v.items || []).forEach((it, i) => {
+                let d = parseFloat(it.qty) || 0;
+                html += `<tr><td>${i + 1}</td><td>${escapeHtml(it.code)}</td><td>${escapeHtml(it.name || '')}</td><td style="${diffStyle(d)}">${d > 0 ? '+' : ''}${fmt(d)}</td><td></td></tr>`;
+            });
+            html += `</tbody></table>`;
+        }
+        area.innerHTML = html;
+    }
 
     function saveFormDraft(type) {
         let formObj = {};
@@ -14580,11 +14680,15 @@ async function syncReturnToSupabase(specificVouchers) {
 }
 
 // ---- چاکسازی/ڕیکۆنسایل ----
-function adjToDb(v) {
-    return { voucher_no: v.voucherNo, date: v.date, source: v.source || null, person_name: v.personName || null, items: v.items || [] };
+function adjToDb(v, includeSheet = true) {
+    let o = { voucher_no: v.voucherNo, date: v.date, source: v.source || null, person_name: v.personName || null, items: v.items || [] };
+    // نوێ: خشتەی جەرد (sheet) تەنها ئەگەر هەبێت دەنێردرێت — بۆ ئەوەی وەسڵە کۆنەکان (کە sheetیان
+    // نییە) هیچ کاتێک داتای sheet ی هەڵگیراو لە داتابەیس بە بەتاڵ نەنووسنەوە.
+    if(includeSheet && v.sheet) o.sheet = v.sheet;
+    return o;
 }
 function adjFromDb(r) {
-    return { voucherNo: r.voucher_no, date: r.date, source: r.source, personName: r.person_name, items: r.items || [] };
+    return { voucherNo: r.voucher_no, date: r.date, source: r.source, personName: r.person_name, items: r.items || [], sheet: r.sheet || [] };
 }
 // چاککردنی هەڵەیەکی زۆر گرنگی (Race Condition/Data-Loss): بڕوانە تێبینی سەرەکی لەناو
 // syncInventoryToSupabase() سەرەوە.
@@ -14592,8 +14696,17 @@ async function syncAdjustmentToSupabase(specificVouchers) {
     try {
         let vouchersToSync = (specificVouchers && specificVouchers.length) ? specificVouchers : adjustmentVouchers;
         if(vouchersToSync.length) {
-            const { error } = await sb.from('adjustment_vouchers').upsert(dedupeByKey(vouchersToSync, x => x.voucherNo).map(adjToDb), { onConflict: 'voucher_no' });
-            if(error) throw error;
+            let uniqueAdj = dedupeByKey(vouchersToSync, x => x.voucherNo);
+            const { error } = await sb.from('adjustment_vouchers').upsert(uniqueAdj.map(v => adjToDb(v, true)), { onConflict: 'voucher_no' });
+            if(error) {
+                // پاشەکشەی سەلامەت: ئەگەر ستوونی sheet هێشتا لە داتابەیس نەبێت، وەسڵی جەرد بەبێ ئەو
+                // ستوونە پاشکەوت دەکرێت تاکو هیچ داتایەکی سەرەکی (باڵانس) لەدەست نەچێت.
+                if(((error.message || '') + ' ' + (error.details || '')).includes('sheet')) {
+                    const { error: e2 } = await sb.from('adjustment_vouchers').upsert(uniqueAdj.map(v => adjToDb(v, false)), { onConflict: 'voucher_no' });
+                    if(e2) throw e2;
+                    console.warn('ستوونی sheet لە adjustment_vouchers نییە — خشتەی جەرد پاشکەوت نەکرا.');
+                } else throw error;
+            }
         }
     } catch(e) {
         console.error('sync adjustment failed', e);
